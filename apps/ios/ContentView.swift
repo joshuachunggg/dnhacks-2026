@@ -47,9 +47,9 @@ private struct SiteScreen: View {
                 DemoActionCard(viewModel: viewModel)
 
                 if let snapshot = viewModel.snapshot {
-                    DemoCard(title: "Site", subtitle: snapshot.sourceSummary, systemImage: "house.fill") {
+                    DemoCard(title: "Site", subtitle: viewModel.isUsingFixtureFallback ? snapshot.sourceSummary : "Server-returned assessment after deterministic tool runs", systemImage: "house.fill") {
                         VStack(spacing: 12) {
-                            FactRow(title: "Assessment ID", value: snapshot.assessmentId, provenance: "fixture boundary", evidence: "modern-200a.json")
+                            FactRow(title: "Assessment ID", value: snapshot.assessmentId, provenance: viewModel.isUsingFixtureFallback ? "fixture boundary" : "server-returned assessment", evidence: viewModel.isUsingFixtureFallback ? "modern-200a.json" : "create → engineering → cost tool responses")
                             FactRow(title: "Site label", value: snapshot.site.label, provenance: "user-facing site identity", evidence: snapshot.site.id)
                             FactRow(title: "Address", value: snapshot.site.address, provenance: "seeded demo address", evidence: "loaded from fixture")
                             FactRow(title: "Jurisdiction", value: "\(snapshot.site.jurisdiction.ahj), \(snapshot.site.jurisdiction.city), \(snapshot.site.jurisdiction.state)", provenance: "jurisdictional fixture", evidence: "\(snapshot.site.jurisdiction.county) County")
@@ -209,7 +209,7 @@ private struct ResultsScreen: View {
 
                     EngineeringRunStatusCard(viewModel: viewModel)
 
-                    DemoCard(title: "Tool run provenance", subtitle: "Returned by the deterministic engineering tool", systemImage: "wrench.and.screwdriver.fill") {
+                    DemoCard(title: "Tool run provenance", subtitle: "Server-returned deterministic engineering and cost tools", systemImage: "wrench.and.screwdriver.fill") {
                         VStack(spacing: 12) {
                             ForEach(snapshot.toolRuns) { toolRun in
                                 ToolRunRow(toolRun: toolRun)
@@ -241,28 +241,11 @@ private struct ResultsScreen: View {
                         }
                     }
 
-                    if let cost = snapshot.costScenarios.first {
-                        DemoCard(title: "Cost range", subtitle: cost.label, systemImage: "dollarsign.circle.fill") {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text(rangeString(low: cost.totalLow, expected: cost.totalExpected, high: cost.totalHigh, currency: cost.currency))
-                                    .font(.headline)
-                                ForEach(cost.lineItems) { item in
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        HStack {
-                                            Text(item.label)
-                                                .font(.subheadline.weight(.semibold))
-                                            Spacer()
-                                            Text(rangeString(low: item.low, expected: item.expected, high: item.high, currency: item.currency))
-                                                .font(.footnote.monospacedDigit())
-                                        }
-                                        Text("\(quantityString(item.quantity)) \(item.unit) · source: \(item.source)")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    CostResultsCard(
+                        cost: snapshot.costScenarios.first,
+                        toolRun: snapshot.toolRuns.last(where: { $0.toolName == "runCostScenario" }),
+                        isUsingFixtureFallback: viewModel.isUsingFixtureFallback
+                    )
 
                     DemoCard(title: "Installer handoff", subtitle: snapshot.finalAssessment.installerHandoff.title, systemImage: "square.and.arrow.up") {
                         VStack(alignment: .leading, spacing: 8) {
@@ -283,6 +266,148 @@ private struct ResultsScreen: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Results")
+    }
+}
+
+private struct CostResultsCard: View {
+    let cost: DemoCostScenario?
+    let toolRun: DemoToolRun?
+    let isUsingFixtureFallback: Bool
+
+    private var status: CostPresentationStatus {
+        guard let rawStatus = toolRun?.output["costStatus"]?.stringValue else {
+            return isUsingFixtureFallback ? .fixtureRange : .unavailable
+        }
+        return CostPresentationStatus(rawValue: rawStatus) ?? .unavailable
+    }
+
+    private var missingInputs: [String] {
+        toolRun?.output["missingInputs"]?.stringArrayValue ?? []
+    }
+
+    var body: some View {
+        DemoCard(title: "Cost result", subtitle: status.subtitle, systemImage: "dollarsign.circle.fill") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline) {
+                    ScenarioBadge(text: status.rawValue)
+                    Spacer()
+                    if let toolRun {
+                        Text("Server tool · \(toolRun.timestamp)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Bundled fixture")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Text(status.explanation)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+
+                if let cost, status.showsNumericRange {
+                    Text(rangeString(low: cost.totalLow, expected: cost.totalExpected, high: cost.totalHigh, currency: cost.currency))
+                        .font(.headline)
+                    Text("Planning range only; not an installer quote.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(cost.lineItems) { item in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(item.label)
+                                    .font(.subheadline.weight(.semibold))
+                                Spacer()
+                                Text(rangeString(low: item.low, expected: item.expected, high: item.high, currency: item.currency))
+                                    .font(.footnote.monospacedDigit())
+                            }
+                            Text("\(quantityString(item.quantity)) \(item.unit) · source: \(item.source)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            if !item.assumptions.isEmpty {
+                                Text("Assumptions: \(item.assumptions.joined(separator: " "))")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    if !cost.assumptions.isEmpty {
+                        Text("Cost assumptions: \(cost.assumptions.joined(separator: " "))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if status == .insufficientData {
+                    Text("No numeric cost is available.")
+                        .font(.headline)
+                    ForEach(missingInputs, id: \.self) { item in
+                        Label(item, systemImage: "questionmark.circle.fill")
+                            .font(.subheadline)
+                    }
+                }
+
+                if let toolRun, !toolRun.warnings.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Cost disclaimer")
+                            .font(.subheadline.weight(.semibold))
+                        ForEach(toolRun.warnings, id: \.self) { warning in
+                            Text(warning)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else if isUsingFixtureFallback {
+                    Text("Cost disclaimer: bundled fixture values are demo planning data, not an installer quote.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let toolRun {
+                    Text("Cost provenance · evidence: \(evidenceList(toolRun.evidenceIds))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+}
+
+private enum CostPresentationStatus: String {
+    case preliminaryRange = "preliminary_range"
+    case partialRange = "partial_range"
+    case insufficientData = "insufficient_data"
+    case fixtureRange = "fixture_range"
+    case unavailable
+
+    var subtitle: String {
+        switch self {
+        case .preliminaryRange: return "Preliminary range"
+        case .partialRange: return "Partial range"
+        case .insufficientData: return "Insufficient data"
+        case .fixtureRange: return "Fixture planning range"
+        case .unavailable: return "Cost tool result unavailable"
+        }
+    }
+
+    var explanation: String {
+        switch self {
+        case .preliminaryRange:
+            return "This is a preliminary fixture-scoped planning range, not a whole-project quote. Licensed-electrician and AHJ confirmation can change scope and cost."
+        case .partialRange:
+            return "This is a partial range only. Panel, subpanel, or service-upgrade scope is excluded and unpriced; it is not the whole-project total."
+        case .insufficientData:
+            return "Required route, panel-space, or jurisdiction facts are insufficient, so the server did not calculate a numeric cost."
+        case .fixtureRange:
+            return "The bundled fixture shows a demo planning range. Run the server tools for the current cost status and provenance."
+        case .unavailable:
+            return "The server assessment did not include a recognized cost result. No local cost calculation was performed."
+        }
+    }
+
+    var showsNumericRange: Bool {
+        self == .preliminaryRange || self == .partialRange || self == .fixtureRange
     }
 }
 
@@ -343,7 +468,7 @@ private struct EngineeringIntentCard: View {
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: viewModel.serverBaseURL) { _, _ in viewModel.saveEngineeringIntent() }
 
-                Text("The bundled fixture is posted to create the server assessment before {} requests runEngineeringScenario. Vehicle and charging intent remains local; no electrical calculation runs on this device.")
+                Text("The bundled fixture is posted to create the server assessment, then {} runs engineering followed by cost. Vehicle and charging intent remains local and is not sent to or used by the current deterministic calculations. No electrical calculation runs on this device.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -352,7 +477,7 @@ private struct EngineeringIntentCard: View {
                 } label: {
                     HStack {
                         if viewModel.isRunningEngineeringScenario { ProgressView() }
-                        Text(viewModel.isRunningEngineeringScenario ? "Requesting server result…" : "Run deterministic engineering scenario")
+                        Text(viewModel.isRunningEngineeringScenario ? "Requesting engineering and cost results…" : "Run deterministic engineering and cost scenarios")
                     }
                     .frame(maxWidth: .infinity)
                 }

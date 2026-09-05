@@ -26,6 +26,15 @@ struct EngineeringRequestCheck {
         precondition(toolRequest.value(forHTTPHeaderField: "Content-Type") == "application/json")
         precondition(toolRequest.httpBody == Data("{}".utf8))
 
-        print("Engineering request construction check passed.")
+        let costRequest = EngineeringRequestBuilder.costToolRunRequest(
+            baseURL: baseURL,
+            assessmentId: "created-assessment-id"
+        )
+        precondition(costRequest.url?.absoluteString == "http://localhost:3000/api/assessments/created-assessment-id/tools/runCostScenario")
+        precondition(costRequest.httpMethod == "POST")
+        precondition(costRequest.value(forHTTPHeaderField: "Content-Type") == "application/json")
+        precondition(costRequest.httpBody == Data("{}".utf8))
+
+        print("Engineering and cost request construction check passed.")
     }
 }

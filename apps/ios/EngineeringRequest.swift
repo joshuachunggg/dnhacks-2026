@@ -19,6 +19,17 @@ enum EngineeringRequestBuilder {
         )
     }
 
+    static func costToolRunRequest(baseURL: URL, assessmentId: String) -> URLRequest {
+        makePOSTRequest(
+            url: baseURL
+                .appendingPathComponent("api/assessments")
+                .appendingPathComponent(assessmentId)
+                .appendingPathComponent("tools")
+                .appendingPathComponent("runCostScenario"),
+            body: Data("{}".utf8)
+        )
+    }
+
     private static func makePOSTRequest(url: URL, body: Data) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
