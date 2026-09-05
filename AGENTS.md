@@ -3,7 +3,7 @@
 ## Context
 - DNHacks 2026 is a hackathon build for a spatial AI field engineer.
 - The shipped product is not Hermes/Codex; they are development tools only.
-- Root status is a Next.js + TypeScript scaffold. The iOS and backend lanes are still being built.
+- Root status is a Next.js + TypeScript scaffold. The iOS lane has a seeded native demo; the backend lane is still being built.
 
 ## Priority order
 1. Working end-to-end demo
@@ -31,7 +31,7 @@
 - `docs/HANDOFFS.md` — cross-lane requests and completions.
 - `research/SOURCES.md` — claim-to-source ledger.
 - `bugs/BUGS.md` — prioritized bug ledger.
-- `apps/ios` — future native iPhone shell.
+- `apps/ios` — native iPhone seeded demo and future capture shell.
 - `apps/server` — future backend and deterministic tooling.
 - `packages/schemas` — canonical SiteGraph types and validators.
 - `packages/fixtures` — golden fixture payloads.
