@@ -16,8 +16,10 @@ const TOOL_VERSION = '0.1.0';
 const DETERMINISTIC_CALCULATION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 const COST_DISCLAIMER = 'This is a preliminary, fixture-scoped planning range, not an installer quote. Final scope, permits, code requirements, labor, equipment, and any panel/service work require licensed-electrician and AHJ confirmation.';
 const AUSTIN_PERMIT_SOURCE = 'Austin Energy home-charging guidance (permit and inspection requirement): https://www.austinenergy.com/green-power/plug-in-austin/home-charging; City of Austin FY 2025-26 homeowner fee attachment (advisory $166.99 residential electric-fee anchor, not an EVSE permit quote): https://services.austintexas.gov/budget/cbq/index.cfm?action=pushFile&popup=true&FILE_ID=2050CEDEC9';
+const AUSTIN_SOURCE_AHJ = 'City of Austin';
 const ACCEPTABLE_STATUSES = new Set(['proposed', 'confirmed', 'professionally_verified', 'calculated']);
 const ACCEPTABLE_SOURCE_TYPES = new Set(['measured', 'visually_observed', 'ocr_extracted', 'user_supplied', 'externally_retrieved', 'professionally_verified', 'calculated']);
+const FIXTURE_EVIDENCE_IDS = new Set(['frame-001', 'frame-010', 'frame-011', 'frame-101', 'frame-110']);
 
 const CostInputSnapshotSchema = z.object({
   jurisdiction: z.object({ city: z.string(), state: z.string(), ahj: z.string() }).strict(),
@@ -36,7 +38,7 @@ const TotalSchema = z.object({ low: z.number().nonnegative(), expected: z.number
   .refine((total) => total.low <= total.expected && total.expected <= total.high, 'Cost totals must be ordered.');
 
 export const CostScenarioResultSchema = z.object({
-  origin: z.object({ assessmentId: z.string(), inputSnapshot: CostInputSnapshotSchema, inputFingerprint: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
+  origin: z.object({ assessmentId: z.string(), inputSnapshot: CostInputSnapshotSchema, inputFingerprint: z.string().regex(/^[a-f0-9]{64}$/), calculationTimestamp: z.string().datetime({ offset: true }) }).strict(),
   status: AssessmentStatusSchema,
   costStatus: z.enum(['preliminary_range', 'partial_range', 'insufficient_data']),
   total: TotalSchema.nullable(),
@@ -52,7 +54,8 @@ export const CostScenarioResultSchema = z.object({
 export type CostScenarioResult = z.infer<typeof CostScenarioResultSchema>;
 
 function hasUsableEvidence(fact: { status: string; sourceType: string; evidenceIds: string[] }): boolean {
-  return ACCEPTABLE_STATUSES.has(fact.status) && ACCEPTABLE_SOURCE_TYPES.has(fact.sourceType) && fact.evidenceIds.length > 0;
+  return ACCEPTABLE_STATUSES.has(fact.status) && ACCEPTABLE_SOURCE_TYPES.has(fact.sourceType)
+    && fact.evidenceIds.length > 0 && fact.evidenceIds.every((evidenceId) => FIXTURE_EVIDENCE_IDS.has(evidenceId));
 }
 
 function selectUsableRoute(graph: SiteGraphV0) {
@@ -72,7 +75,9 @@ function fingerprintCostInputs(snapshot: CostInputSnapshot): string {
   return createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
 }
 function isAustinDemoJurisdiction(graph: SiteGraphV0): boolean {
-  return graph.site.jurisdiction.city.trim().toLowerCase() === 'austin' && graph.site.jurisdiction.state.trim().toUpperCase() === 'TX';
+  return graph.site.jurisdiction.city.trim().toLowerCase() === 'austin'
+    && graph.site.jurisdiction.state.trim().toUpperCase() === 'TX'
+    && graph.site.jurisdiction.ahj === AUSTIN_SOURCE_AHJ;
 }
 function roundCurrency(value: number): number { return Math.round(value * 100) / 100; }
 function totalFor(lineItems: Array<{ low: number; expected: number; high: number }>) {
@@ -87,7 +92,7 @@ export function runCostScenario(input: unknown, calculationTimestamp = DETERMINI
   const panelUsable = hasUsableEvidence(panel) && panel.spareBreakerSpaces !== undefined
     && (panel.breakerSpaceCount === undefined || panel.spareBreakerSpaces <= panel.breakerSpaceCount);
   const snapshot = snapshotCostInputs(graph, route);
-  const origin = { assessmentId: graph.assessmentId, inputSnapshot: snapshot, inputFingerprint: fingerprintCostInputs(snapshot) };
+  const origin = { assessmentId: graph.assessmentId, inputSnapshot: snapshot, inputFingerprint: fingerprintCostInputs(snapshot), calculationTimestamp: timestamp };
   const missingInputs = [
     ...(!isAustinDemoJurisdiction(graph) ? ['Austin, TX demo jurisdiction evidence for the permit-fee anchor'] : []),
     ...(!panelUsable ? ['usable spare breaker-space fact and evidence'] : []),
@@ -139,6 +144,7 @@ export function applyCostScenario(input: SiteGraphV0, resultInput: CostScenarioR
   const graph = SiteGraphSchema.parse(input);
   const result = CostScenarioResultSchema.parse(resultInput);
   if (result.origin.assessmentId !== graph.assessmentId) throw new Error('Result assessment origin does not match the input assessment.');
+  if (result.origin.calculationTimestamp !== result.toolRun.timestamp) throw new Error('Result canonical calculation timestamp does not match the ToolRun timestamp.');
   const currentSnapshot = snapshotCostInputs(graph);
   const currentFingerprint = fingerprintCostInputs(currentSnapshot);
   if (result.origin.inputFingerprint !== fingerprintCostInputs(result.origin.inputSnapshot) || result.origin.inputFingerprint !== currentFingerprint || !isDeepStrictEqual(result.origin.inputSnapshot, currentSnapshot)) throw new Error('Result inputs do not match the current calculation-relevant graph facts.');

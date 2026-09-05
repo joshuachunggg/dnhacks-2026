@@ -50,6 +50,31 @@ test('returns no numeric range when route or panel-space evidence is unusable', 
   }
 });
 
+test('returns no numeric range when a panel or route evidence ID does not resolve in graph evidence', () => {
+  const modern = loadFixture('modern-200a');
+  const unknownPanelEvidence = runCostScenario({ ...modern, electricalPanel: { ...modern.electricalPanel, evidenceIds: ['replaced-panel-evidence'] } });
+  const unknownRouteEvidence = runCostScenario({ ...modern, measurements: [{ ...modern.measurements[0], evidenceIds: ['replaced-route-evidence'] }] });
+
+  for (const result of [unknownPanelEvidence, unknownRouteEvidence]) {
+    assert.equal(result.status, 'insufficient_data');
+    assert.equal(result.costStatus, 'insufficient_data');
+    assert.equal(result.total, null);
+    assert.equal(result.scenario, null);
+  }
+});
+
+test('returns no numeric range or Austin fee anchor for an incompatible Austin-area AHJ', () => {
+  const modern = loadFixture('modern-200a');
+  const result = runCostScenario({ ...modern, site: { ...modern.site, jurisdiction: { ...modern.site.jurisdiction, ahj: 'Travis County' } } });
+
+  assert.equal(result.status, 'insufficient_data');
+  assert.equal(result.costStatus, 'insufficient_data');
+  assert.equal(result.total, null);
+  assert.equal(result.scenario, null);
+  assert.ok(!result.toolRun.evidenceIds.some((evidenceId) => /austin/i.test(evidenceId)));
+  assert.ok(!JSON.stringify(result).includes('austin-residential-electric-fee-anchor'));
+});
+
 test('makes panel upgrade uncertainty explicit without presenting a complete-project quote', () => {
   const modern = loadFixture('modern-200a');
   const result = runCostScenario({ ...modern, electricalPanel: { ...modern.electricalPanel, spareBreakerSpaces: 0 } });
@@ -85,4 +110,12 @@ test('adapter rejects stale, tampered, and wrong-assessment results and is idemp
   assert.throws(() => applyCostScenario({ ...graph, measurements: [{ ...graph.measurements[0], value: 44 }] }, result), /inputs do not match/i);
   assert.throws(() => applyCostScenario(graph, { ...result, total: { ...result.total!, expected: 1600 } }), /canonical deterministic calculation/i);
   assert.throws(() => applyCostScenario(loadFixture('constrained-100a'), result), /assessment origin/i);
+});
+
+test('adapter rejects a result whose canonical calculation timestamp was changed', () => {
+  const graph = loadFixture('modern-200a');
+  const result = runCostScenario(graph, '2030-01-02T03:04:05.000Z');
+  const timestampTampered = { ...result, toolRun: { ...result.toolRun, timestamp: '2030-01-02T03:04:06.000Z' } };
+
+  assert.throws(() => applyCostScenario(graph, timestampTampered), /canonical calculation timestamp/i);
 });
