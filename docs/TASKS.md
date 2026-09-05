@@ -18,17 +18,20 @@
 | R-01 | Inspect current directory, Git, and GitHub state | Hermes | DONE | main worktree | none | Versions and auth status captured |
 | R-02 | Verify toolchain versions (`git`, `gh`, `node`, `pnpm`, `swift`, `xcodebuild`) | Hermes | DONE | main worktree | none | Version output recorded |
 | R-03 | Update repo thesis, docs, and monorepo scaffold | Hermes | DONE | `dnhacks-2026` | R-01 | Docs and directories exist |
-| R-04 | Define SiteGraph v0 and fixture set | Hermes | IN PROGRESS | `dnhacks-2026` | R-03 | Schema + three fixtures exist |
-| R-05 | Validate fixtures in TypeScript and Swift | Hermes | IN PROGRESS | `dnhacks-2026` | R-04 | Both checks run successfully |
+| R-04 | Define SiteGraph v0 and fixture set | Hermes | DONE | `dnhacks-2026` | R-03 | Schema + three fixtures exist |
+| R-05 | Validate fixtures in TypeScript and Swift | Hermes | DONE | `dnhacks-2026` | R-04 | Both checks run successfully |
 | R-06 | Create the first thin vertical slice | Hermes | TODO | `dnhacks-2026` | R-04, R-05 | One observation round-trips through UI/state |
-| R-07 | Stand up backend and iOS workstreams | Hermes | TODO | `dnhacks-2026` | R-04 | Lane ownership is clear |
-| R-08 | Create and push the initial GitHub commit | Hermes | TODO | `dnhacks-2026` | R-03, R-04, R-05 | Clean commit on `main` and remote push succeeds |
+| R-07 | Stand up backend and iOS workstreams | Hermes | IN PROGRESS | `dnhacks-2026` | R-04 | Lane ownership is clear |
+| R-08 | Create and push the initial GitHub commit | Hermes | DONE | `dnhacks-2026` | R-03, R-04, R-05 | Clean commit on `main` and remote push succeeds |
 
 ## Current focus
 - [x] Repo inspection complete.
 - [x] Docs updated to the real DNHacks thesis.
 - [x] Monorepo scaffold directories created.
 - [x] Golden fixture payloads created.
+- [x] iOS lane scaffold created.
+- [x] Backend lane scaffold created.
+- [x] Demo lane scaffold created.
 - [ ] TypeScript and Swift fixture validation both pass.
 - [ ] First vertical slice is wired.
 

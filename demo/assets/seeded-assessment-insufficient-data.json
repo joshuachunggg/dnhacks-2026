@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "0.1.0",
+  "assessmentId": "assessment-insufficient-data",
+  "site": {
+    "id": "site-insufficient-data",
+    "label": "Insufficient data demo property",
+    "address": "789 Maple Street, Austin, TX",
+    "jurisdiction": {
+      "city": "Austin",
+      "county": "Travis",
+      "state": "TX",
+      "ahj": "City of Austin"
+    },
+    "utility": "Austin Energy"
+  },
+  "proposedEvseLocation": {
+    "id": "evse-insufficient-data",
+    "label": "Unknown proposed location",
+    "wall": "unknown",
+    "status": "proposed",
+    "sourceType": "assumed",
+    "confidence": 0.3,
+    "evidenceIds": [],
+    "timestamp": "2026-09-05T13:20:00-05:00",
+    "producer": "demo-seed",
+    "assumptions": ["Demo path uses a placeholder location until the user taps a wall."],
+    "notes": ["Use only for fallback narration."]
+  },
+  "electricalPanel": {
+    "id": "panel-insufficient-data",
+    "label": "Panel not yet observed",
+    "status": "proposed",
+    "sourceType": "assumed",
+    "confidence": 0.2,
+    "evidenceIds": [],
+    "timestamp": "2026-09-05T13:20:00-05:00",
+    "producer": "demo-seed",
+    "visibleConditionNotes": ["Panel has not been captured yet."],
+    "assumptions": ["No service facts are known."],
+    "notes": ["The system should ask for a panel photo."]
+  },
+  "measurements": [],
+  "observations": [],
+  "engineeringScenarios": [
+    {
+      "id": "scenario-missing",
+      "label": "Any charger scenario",
+      "status": "insufficient_data",
+      "resultSummary": "Cannot choose a charging scenario without panel/service facts and route information.",
+      "requirements": ["Panel photo", "Service size", "Load inventory or utility data", "Proposed location"],
+      "warnings": ["This fixture exists to keep the demo honest when data is missing."],
+      "assumptions": [],
+      "evidenceIds": [],
+      "timestamp": "2026-09-05T13:20:05-05:00"
+    }
+  ],
+  "toolRuns": [
+    {
+      "id": "tool-missing-data",
+      "toolName": "runEngineeringScenario",
+      "version": "0.1.0",
+      "inputSummary": "Missing panel, measurement, and load data",
+      "resultStatus": "insufficient_data",
+      "warnings": ["The app should request structured input instead of guessing."],
+      "assumptions": [],
+      "evidenceIds": [],
+      "output": {
+        "missing": ["panel photo", "service size", "route measurement"]
+      },
+      "timestamp": "2026-09-05T13:20:10-05:00"
+    }
+  ],
+  "costScenarios": [
+    {
+      "id": "cost-missing-data",
+      "label": "Not yet estimable",
+      "status": "insufficient_data",
+      "totalLow": 0,
+      "totalExpected": 0,
+      "totalHigh": 0,
+      "currency": "USD",
+      "lineItems": [],
+      "assumptions": ["Need a real site observation before estimating."],
+      "warnings": ["Do not invent a price when the site is unknown."],
+      "evidenceIds": []
+    }
+  ],
+  "finalAssessment": {
+    "status": "insufficient_data",
+    "summary": "More observation is required before the app can say anything credible about charger feasibility.",
+    "unresolvedRequirements": ["Panel photo", "Location tap", "Load data"],
+    "professionalVerificationItems": ["Electrician review after the data is collected"],
+    "installerHandoff": {
+      "title": "Waiting for observations",
+      "bullets": ["Open the structured form", "Capture the panel", "Tap the charger location"]
+    },
+    "timestamp": "2026-09-05T13:20:15-05:00"
+  }
+}

@@ -24,3 +24,12 @@
 ## Completed handoffs
 - Repo inspection complete.
 - Documentation scaffold updated.
+- iOS lane scaffold created in `apps/ios` with a scaffold-only SwiftUI state model.
+- Backend lane scaffold created in `apps/server` with typed placeholder contracts.
+- Demo lane scaffold created in `demo/` with seeded assessment assets and reset notes.
+- Research lane source card added in `research/` with Austin / Austin Energy cost anchors.
+
+## New handoff
+- **iOS lane -> orchestrator**: create an Xcode project/workspace and wire the scaffold files into a buildable target.
+  - Blocker: this host does not have Xcode installed, so `xcodebuild` cannot run yet.
+  - Next acceptance: the native shell opens in simulator/device and decodes the same SiteGraph v0 shape.

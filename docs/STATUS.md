@@ -11,15 +11,21 @@
 - Confirmed the repo is already initialized and connected to GitHub.
 - Updated the repo front door and operating docs.
 - Added the plan, architecture, contracts, decisions, safety, and handoff scaffolding.
+- Added SiteGraph v0 schemas and three golden fixtures.
+- Verified TypeScript and Swift can decode the canonical fixture.
+- Scaffolded the iOS lane with a native SwiftUI starter state.
+- Scaffolded the backend lane with a typed placeholder manifest and draft envelope.
+- Scaffolded the demo lane with seeded fallback assets and reset notes.
+- Added the Austin/Austin Energy source card and cost anchor notes in `research/`.
+- Pushed commit `2f9811c` to `origin/main`.
 
 ## Current work
-- Define SiteGraph v0 in TypeScript.
-- Add golden fixtures for modern 200 A, constrained 100 A, and insufficient-data homes.
-- Build a TypeScript fixture validator.
-- Build a standalone Swift fixture decoder.
+- Build the first thin vertical slice.
+- Stand up backend and demo lane scaffolds.
+- Add the backend API and typed tools.
 
 ## Blockers
-- No Xcode project or iOS app target exists yet.
+- The iOS lane is scaffold-only until an Xcode project/workspace is created; `xcodebuild` is unavailable on this host because only Command Line Tools are installed.
 - The repo still needs the actual iPhone shell and backend service implementations.
 - Jurisdiction and cost data are still fixture-backed only.
 
