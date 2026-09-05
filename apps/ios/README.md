@@ -8,9 +8,9 @@ This directory is the native SwiftUI assessment shell starting point.
 - `SiteGraphDemoState.swift` — tiny demo-state model/view model for SiteGraph v0
 
 ## Status
-- Scaffold only
-- No Xcode project exists yet, so this lane is not buildable as-is
-- Keep this lane isolated from shared contracts until the native target is wired up
+- Buildable SwiftUI target: `SiteGraphShell.xcodeproj`
+- Target: `SiteGraphShell` (`com.dnhacks.sitegraphshell`), iOS 17+
+- Keep this lane isolated from shared contracts until native integration is wired up
 
 ## Intended demo state
 The first native shell should render a SiteGraph v0 assessment summary, including:
