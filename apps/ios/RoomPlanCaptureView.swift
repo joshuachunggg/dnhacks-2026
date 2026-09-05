@@ -5,6 +5,7 @@ import UIKit
 struct RoomPlanCaptureCard: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
     @State private var isPresentingCapture = false
+    @State private var isPresentingModelPreview = false
     @State private var capturePayload: SpatialCapturePayload?
     @State private var captureError: String?
 
@@ -34,6 +35,17 @@ struct RoomPlanCaptureCard: View {
                     isPresentingCapture = true
                 }
                 .buttonStyle(.borderedProminent)
+
+                if let modelURL = roomModelURL {
+                    Button("View 3D room model") {
+                        isPresentingModelPreview = true
+                    }
+                    .buttonStyle(.bordered)
+                    .sheet(isPresented: $isPresentingModelPreview) {
+                        RoomModelQuickLookPreview(modelURL: modelURL)
+                            .ignoresSafeArea()
+                    }
+                }
             }
         } label: {
             Label("Spatial room capture", systemImage: "view.3d")
@@ -51,6 +63,10 @@ struct RoomPlanCaptureCard: View {
             }
             .ignoresSafeArea()
         }
+    }
+
+    private var roomModelURL: URL? {
+        capturePayload?.artifacts.first(where: { $0.kind == .roomUSDZ })?.localFileURL
     }
 }
 

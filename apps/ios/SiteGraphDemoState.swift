@@ -439,7 +439,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
             isUsingFixtureFallback = false
             spatialCaptureStatus = "Spatial metadata recorded on the server. The USDZ remains local to this device."
         } catch {
-            spatialCaptureStatus = "Room model saved locally; server metadata recording failed: \(error.localizedDescription)"
+            spatialCaptureStatus = "Room model saved locally; server metadata recording failed: \(error.localizedDescription). Confirm the phone and Mac share Wi-Fi, then use the Mac LAN URL—not localhost—in the Panel server field."
         }
     }
 

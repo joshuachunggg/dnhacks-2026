@@ -1,6 +1,6 @@
 # Spatial Capture and Artifact Storage
 
-**Status:** first vertical slice implemented on 2026-09-05. One-room RoomPlan capture exports a local USDZ, computes an integrity descriptor, and posts a validated metadata manifest to the in-memory assessment API. ARKit anchors, route capture, panel capture, durable uploads, and interactive 3D viewing remain unimplemented.
+**Status:** first vertical slice implemented on 2026-09-05. One-room RoomPlan capture exports a local USDZ, computes an integrity descriptor, posts a validated metadata manifest to the in-memory assessment API, and opens the local model in the system Quick Look 3D viewer. ARKit anchors, route capture, panel capture, and durable uploads remain unimplemented.
 
 ## Purpose
 
@@ -13,7 +13,7 @@ The first live slice is intentionally one **relevant room or garage area**, not 
 The native app is a guided workflow rather than four equal data tabs:
 
 1. **Assessment home** — shows run mode (`live capture`, `seeded demo`, or `fallback`), the current outcome or next required action, and progress through the assessment.
-2. **Capture space** — guides one RoomPlan scan, reports completion/failure, saves the spatial artifact, and shows a compact room preview.
+2. **Capture space** — guides one RoomPlan scan, reports completion/failure, saves the spatial artifact, and opens an interactive Quick Look USDZ preview for rotation, zoom, and inspection.
 3. **Capture panel** — takes or selects one panel image, creates proposed visual/OCR observations, and requires the user to confirm or correct them.
 4. **Choose charger location** — places a proposed EVSE AR anchor, captures route evidence/measurement, and requires confirmation before those facts become usable input.
 5. **Review and results** — separates confirmed evidence, unresolved items, deterministic feasibility/cost scenarios, and electrician/AHJ verification requirements. Detailed IDs, raw tool runs, and provenance remain available behind a Details disclosure.

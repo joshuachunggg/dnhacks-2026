@@ -38,6 +38,11 @@ struct SpatialArtifact: Encodable {
     let contentType: String
     let byteLength: Int
     let sha256: String
+
+    var localFileURL: URL? {
+        guard let url = URL(string: uri), url.isFileURL else { return nil }
+        return url
+    }
 }
 
 struct SpatialEvidence: Encodable {
