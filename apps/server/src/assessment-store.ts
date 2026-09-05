@@ -7,6 +7,10 @@ import {
   applyEngineeringScenario as applyCanonicalEngineeringScenario,
   type EngineeringScenarioResult,
 } from './engineering-calculator';
+import {
+  applyCostScenario as applyCanonicalCostScenario,
+  type CostScenarioResult,
+} from './cost-calculator';
 
 export class AssessmentNotFoundError extends Error {
   constructor(assessmentId: string) {
@@ -19,7 +23,8 @@ export interface InMemoryAssessmentStore {
   create(input: unknown): SiteGraphV0;
   get(assessmentId: string): SiteGraphV0 | undefined;
   appendObservationEvent(assessmentId: string, input: unknown): SiteGraphV0;
-  applyEngineeringScenario(assessmentId: string, result: EngineeringScenarioResult): SiteGraphV0;
+  applyEngineeringScenario(assessmentId: string, result: EngineeringScenarioResult, calculationTimestamp?: string): SiteGraphV0;
+  applyCostScenario(assessmentId: string, result: CostScenarioResult, calculationTimestamp?: string): SiteGraphV0;
 }
 
 export function createInMemoryAssessmentStore(): InMemoryAssessmentStore {
@@ -51,13 +56,24 @@ export function createInMemoryAssessmentStore(): InMemoryAssessmentStore {
       return updated;
     },
 
-    applyEngineeringScenario(assessmentId: string, result: EngineeringScenarioResult): SiteGraphV0 {
+    applyEngineeringScenario(assessmentId: string, result: EngineeringScenarioResult, calculationTimestamp?: string): SiteGraphV0 {
       const current = assessments.get(assessmentId);
       if (!current) {
         throw new AssessmentNotFoundError(assessmentId);
       }
 
-      const updated = applyCanonicalEngineeringScenario(current, result);
+      const updated = applyCanonicalEngineeringScenario(current, result, calculationTimestamp);
+      assessments.set(assessmentId, updated);
+      return updated;
+    },
+
+    applyCostScenario(assessmentId: string, result: CostScenarioResult, calculationTimestamp?: string): SiteGraphV0 {
+      const current = assessments.get(assessmentId);
+      if (!current) {
+        throw new AssessmentNotFoundError(assessmentId);
+      }
+
+      const updated = applyCanonicalCostScenario(current, result, calculationTimestamp);
       assessments.set(assessmentId, updated);
       return updated;
     },

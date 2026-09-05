@@ -82,3 +82,14 @@ test('atomically persists a canonical engineering scenario result', () => {
   assert.equal(updated.engineeringScenarios.at(-1)?.id, `engineering-scenario-${created.assessmentId}`);
   assert.equal(store.get(created.assessmentId)?.toolRuns.at(-1)?.timestamp, result.toolRun.timestamp);
 });
+
+test('uses the supplied engineering calculation timestamp when applying a result', () => {
+  const store = createInMemoryAssessmentStore();
+  const created = store.create(fixture);
+  const result = runEngineeringScenario(created, '2030-01-02T03:04:05.000Z');
+
+  assert.throws(
+    () => store.applyEngineeringScenario(created.assessmentId, result, '2030-01-02T03:04:06.000Z'),
+    /trusted calculation timestamp/i,
+  );
+});
