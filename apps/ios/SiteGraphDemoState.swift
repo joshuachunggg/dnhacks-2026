@@ -212,7 +212,50 @@ struct DemoToolRun: Codable, Identifiable {
     let warnings: [String]
     let assumptions: [String]
     let evidenceIds: [String]
+    let output: [String: DemoJSONValue]
     let timestamp: String
+}
+
+enum DemoJSONValue: Codable {
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+    case array([DemoJSONValue])
+    case object([String: DemoJSONValue])
+    case null
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if container.decodeNil() { self = .null }
+        else if let value = try? container.decode(Bool.self) { self = .bool(value) }
+        else if let value = try? container.decode(Double.self) { self = .number(value) }
+        else if let value = try? container.decode(String.self) { self = .string(value) }
+        else if let value = try? container.decode([DemoJSONValue].self) { self = .array(value) }
+        else if let value = try? container.decode([String: DemoJSONValue].self) { self = .object(value) }
+        else { throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unsupported tool output value") }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let value): try container.encode(value)
+        case .number(let value): try container.encode(value)
+        case .bool(let value): try container.encode(value)
+        case .array(let value): try container.encode(value)
+        case .object(let value): try container.encode(value)
+        case .null: try container.encodeNil()
+        }
+    }
+
+    var stringValue: String? {
+        guard case .string(let value) = self else { return nil }
+        return value
+    }
+
+    var stringArrayValue: [String]? {
+        guard case .array(let values) = self else { return nil }
+        return values.compactMap(\.stringValue)
+    }
 }
 
 struct DemoCostScenario: Codable, Identifiable {
@@ -288,7 +331,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
     var actionTitle: String { "Reset seeded assessment" }
 
     var actionSubtitle: String {
-        "Restore modern-200A fixture and clear the saved vehicle and charging intent."
+        "Restore modern-200A fixture and clear the saved vehicle and charging intent in one action."
     }
 
     func saveEngineeringIntent() {
@@ -351,9 +394,15 @@ final class SiteGraphDemoViewModel: ObservableObject {
                     assessmentId: created.assessment.assessmentId
                 )
             )
-            self.snapshot = response.assessment
+            let costResponse: LiveAssessmentResponse = try await send(
+                EngineeringRequestBuilder.costToolRunRequest(
+                    baseURL: baseURL,
+                    assessmentId: response.assessment.assessmentId
+                )
+            )
+            self.snapshot = costResponse.assessment
             isUsingFixtureFallback = false
-            engineeringStatus = "Server tool run returned the current assessment. Results below are server-provided."
+            engineeringStatus = "Server engineering and cost tool runs returned the current assessment. Results below are server-provided."
             engineeringStatusIsError = false
         } catch {
             restoreFixtureFallback(after: error)
