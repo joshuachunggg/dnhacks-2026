@@ -1,10 +1,10 @@
 # Status
 
 ## Snapshot
-- Repo is a clean `main` worktree with `origin` configured.
+- `main` includes the native iOS target and `origin` is configured.
 - Current app shell is still the default Next.js scaffold, but the repo docs now reflect the real DNHacks thesis.
 - Shared contract work is moving to SiteGraph v0 plus golden fixtures.
-- iOS and backend directories exist conceptually, but their implementations are still pending.
+- The iOS shell is an iOS 17+ SwiftUI target and has been run on a physical iPhone; backend implementation is still pending.
 
 ## Completed
 - Inspected Git state, branch, remote, and toolchain availability.
@@ -14,25 +14,25 @@
 - Added SiteGraph v0 schemas and three golden fixtures.
 - Verified TypeScript and Swift can decode the canonical fixture.
 - Scaffolded the iOS lane with a native SwiftUI starter state.
+- Added `apps/ios/SiteGraphShell.xcodeproj`, the `SiteGraphShell` scheme, and wired the SwiftUI scaffold into the target.
+- Verified the native scaffold runs on a physical iPhone.
 - Scaffolded the backend lane with a typed placeholder manifest and draft envelope.
 - Scaffolded the demo lane with seeded fallback assets and reset notes.
 - Added the Austin/Austin Energy source card and cost anchor notes in `research/`.
 - Pushed commit `2f9811c` to `origin/main`.
 
 ## Current work
-- Build the first thin vertical slice.
-- Stand up backend and demo lane scaffolds.
-- Add the backend API and typed tools.
+- Sprint 1: build the guided seeded assessment flow and Swift fixture boundary.
+- Then build the live agent plus first observation round-trip through a typed backend API.
 
 ## Blockers
-- The iOS lane is scaffold-only until an Xcode project/workspace is created; `xcodebuild` is unavailable on this host because only Command Line Tools are installed.
-- The repo still needs the actual iPhone shell and backend service implementations.
+- The repo still needs the guided iPhone workflow, live agent, backend service, and one end-to-end observation path.
+- Simulator services are unavailable to this terminal environment; physical-device deployment is verified instead.
 - Jurisdiction and cost data are still fixture-backed only.
 
 ## Next integration point
-- A single SiteGraph fixture should decode cleanly in TypeScript and Swift.
-- After that, the first vertical slice should send one observation through the validated state boundary and render it back in the UI.
+- The first vertical slice should send one observation through the validated state boundary and render it back in the iOS UI.
 
 ## Demo readiness
 - Status: not ready yet
-- Reason: the shared contract exists only in docs so far, not in runtime code.
+- Reason: the native shell runs, but capture, realtime intelligence, validated server round-trip, deterministic results, and installer handoff are not yet connected.

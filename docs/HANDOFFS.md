@@ -25,11 +25,7 @@
 - Repo inspection complete.
 - Documentation scaffold updated.
 - iOS lane scaffold created in `apps/ios` with a scaffold-only SwiftUI state model.
+- iOS lane target created in `apps/ios/SiteGraphShell.xcodeproj`; the `SiteGraphShell` scheme wires the scaffold files into an iOS 17+ app and has been run on a physical iPhone.
 - Backend lane scaffold created in `apps/server` with typed placeholder contracts.
 - Demo lane scaffold created in `demo/` with seeded assessment assets and reset notes.
 - Research lane source card added in `research/` with Austin / Austin Energy cost anchors.
-
-## New handoff
-- **iOS lane -> orchestrator**: create an Xcode project/workspace and wire the scaffold files into a buildable target.
-  - Blocker: this host does not have Xcode installed, so `xcodebuild` cannot run yet.
-  - Next acceptance: the native shell opens in simulator/device and decodes the same SiteGraph v0 shape.
