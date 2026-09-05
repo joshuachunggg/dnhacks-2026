@@ -1,0 +1,173 @@
+{
+  "schemaVersion": "0.1.0",
+  "assessmentId": "assessment-modern-200a",
+  "site": {
+    "id": "site-modern-200a",
+    "label": "Modern 200 A home",
+    "address": "1234 Oak Street, Austin, TX",
+    "jurisdiction": {
+      "city": "Austin",
+      "county": "Travis",
+      "state": "TX",
+      "ahj": "City of Austin"
+    },
+    "utility": "Austin Energy"
+  },
+  "proposedEvseLocation": {
+    "id": "evse-modern-200a",
+    "label": "Garage west wall",
+    "wall": "garage west wall",
+    "status": "confirmed",
+    "sourceType": "user_supplied",
+    "confidence": 0.95,
+    "evidenceIds": ["frame-001"],
+    "timestamp": "2026-09-05T13:00:00-05:00",
+    "producer": "demo-seed",
+    "assumptions": [],
+    "notes": ["User pointed to the intended mount location."]
+  },
+  "electricalPanel": {
+    "id": "panel-modern-200a",
+    "label": "Main panel",
+    "status": "proposed",
+    "sourceType": "visually_observed",
+    "confidence": 0.86,
+    "evidenceIds": ["frame-010", "frame-011"],
+    "timestamp": "2026-09-05T13:00:20-05:00",
+    "producer": "seed-vision",
+    "manufacturer": "Square D",
+    "modelFamily": "QO",
+    "serviceVoltage": 240,
+    "serviceAmps": 200,
+    "busRatingAmps": 225,
+    "breakerSpaceCount": 40,
+    "spareBreakerSpaces": 12,
+    "visibleConditionNotes": ["Panel door is modern and labeled.", "Visible spare spaces appear available."],
+    "assumptions": ["Service size inferred from visible marking and user confirmation."],
+    "notes": ["Main breaker marking is visible in the seed frame."]
+  },
+  "measurements": [
+    {
+      "id": "route-modern-200a",
+      "kind": "route_length",
+      "value": 31,
+      "unit": "ft",
+      "status": "calculated",
+      "sourceType": "measured",
+      "confidence": 0.82,
+      "evidenceIds": ["frame-001", "frame-010"],
+      "timestamp": "2026-09-05T13:00:30-05:00",
+      "producer": "route-estimator-v0",
+      "assumptions": ["Shortest practical wall route used."],
+      "notes": ["Straight-line distance was 24 ft; estimated route adds bends and verticals."]
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs-panel-brand",
+      "kind": "panel",
+      "field": "manufacturer",
+      "value": "Square D",
+      "status": "proposed",
+      "sourceType": "ocr_extracted",
+      "confidence": 0.91,
+      "evidenceIds": ["frame-010"],
+      "timestamp": "2026-09-05T13:00:21-05:00",
+      "producer": "vision-ocr-v0",
+      "assumptions": ["Text on the panel label is legible."],
+      "notes": []
+    },
+    {
+      "id": "obs-spaces",
+      "kind": "panel",
+      "field": "spareBreakerSpaces",
+      "value": 12,
+      "unit": "spaces",
+      "status": "proposed",
+      "sourceType": "visually_observed",
+      "confidence": 0.84,
+      "evidenceIds": ["frame-011"],
+      "timestamp": "2026-09-05T13:00:22-05:00",
+      "producer": "seed-vision",
+      "assumptions": [],
+      "notes": ["Spare spaces do not prove spare load capacity."]
+    }
+  ],
+  "engineeringScenarios": [
+    {
+      "id": "scenario-32a",
+      "label": "32 A hardwired charger",
+      "chargerCurrentAmps": 32,
+      "status": "pass",
+      "resultSummary": "Fits the modern 200 A service with the current demo assumptions.",
+      "requirements": ["Electrician verification of breaker type and conductor sizing."],
+      "warnings": ["Panel load headroom remains preliminary until a true load calculation is run."],
+      "assumptions": ["Conductor route is short and indoors."],
+      "evidenceIds": ["route-modern-200a"],
+      "timestamp": "2026-09-05T13:00:35-05:00"
+    },
+    {
+      "id": "scenario-48a",
+      "label": "48 A hardwired charger",
+      "chargerCurrentAmps": 48,
+      "status": "conditional",
+      "resultSummary": "Plausible, but the demo should keep the load calculation and electrician review explicit.",
+      "requirements": ["Load-screen result.", "Electrician verification."],
+      "warnings": ["This is not a final NEC compliance determination."],
+      "assumptions": ["A conservative continuous-load screen is used."],
+      "evidenceIds": ["route-modern-200a"],
+      "timestamp": "2026-09-05T13:00:36-05:00"
+    }
+  ],
+  "costScenarios": [
+    {
+      "id": "cost-modern-200a",
+      "label": "Typical install at modern 200 A home",
+      "status": "conditional",
+      "totalLow": 1400,
+      "totalExpected": 2200,
+      "totalHigh": 3200,
+      "currency": "USD",
+      "lineItems": [
+        {
+          "id": "hardware",
+          "label": "EVSE hardware",
+          "quantity": 1,
+          "unit": "unit",
+          "low": 500,
+          "expected": 800,
+          "high": 1200,
+          "currency": "USD",
+          "source": "demo cost fixture",
+          "assumptions": ["Wall-mounted consumer EVSE"]
+        },
+        {
+          "id": "labor",
+          "label": "Labor",
+          "quantity": 6,
+          "unit": "hour",
+          "low": 90,
+          "expected": 125,
+          "high": 150,
+          "currency": "USD",
+          "source": "demo labor-rate fixture",
+          "assumptions": ["Easy interior route", "No drywall repair beyond patching"]
+        }
+      ],
+      "assumptions": ["No panel replacement required."],
+      "warnings": [],
+      "evidenceIds": ["route-modern-200a"]
+    }
+  ],
+  "finalAssessment": {
+    "status": "conditional",
+    "summary": "A 32 A charger looks plausible at the demo home; 48 A remains possible but should stay labeled as preliminary until load and electrician verification are complete.",
+    "unresolvedRequirements": ["True load calculation", "Breaker compatibility", "Final electrician review"],
+    "professionalVerificationItems": ["Service and panel confirmation", "Conductor and breaker selection"],
+    "installerHandoff": {
+      "title": "Preliminary EV charger handoff",
+      "bullets": ["Proposed wall: garage west wall", "Panel: modern 200 A Square D QO family", "Best current demo option: 32 A hardwired charger"]
+    },
+    "timestamp": "2026-09-05T13:00:50-05:00"
+  }
+}
