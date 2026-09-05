@@ -42,7 +42,7 @@ private struct SiteScreen: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
     var body: some View {
-        ScrollView {
+        AssessmentScrollContainer {
             VStack(spacing: 16) {
                 DemoActionCard(viewModel: viewModel)
 
@@ -73,9 +73,7 @@ private struct SiteScreen: View {
                     )
                 }
             }
-            .padding()
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Site")
     }
 }
@@ -84,7 +82,7 @@ private struct PanelScreen: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
     var body: some View {
-        ScrollView {
+        AssessmentScrollContainer {
             VStack(spacing: 16) {
                 DemoActionCard(viewModel: viewModel)
                 EngineeringIntentCard(viewModel: viewModel)
@@ -125,9 +123,7 @@ private struct PanelScreen: View {
                     )
                 }
             }
-            .padding()
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Panel")
     }
 }
@@ -136,7 +132,7 @@ private struct ChargerLocationScreen: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
     var body: some View {
-        ScrollView {
+        AssessmentScrollContainer {
             VStack(spacing: 16) {
                 DemoActionCard(viewModel: viewModel)
 
@@ -170,9 +166,7 @@ private struct ChargerLocationScreen: View {
                     )
                 }
             }
-            .padding()
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Charger Location")
     }
 }
@@ -181,7 +175,7 @@ private struct ResultsScreen: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
     var body: some View {
-        ScrollView {
+        AssessmentScrollContainer {
             VStack(spacing: 16) {
                 DemoActionCard(viewModel: viewModel)
 
@@ -262,10 +256,33 @@ private struct ResultsScreen: View {
                     )
                 }
             }
-            .padding()
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Results")
+    }
+}
+
+private struct AssessmentScrollContainer<Content: View>: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @ViewBuilder let content: Content
+
+    private var maximumContentWidth: CGFloat {
+        horizontalSizeClass == .regular ? 720 : .infinity
+    }
+
+    private var horizontalPadding: CGFloat {
+        horizontalSizeClass == .regular ? 24 : 16
+    }
+
+    var body: some View {
+        ScrollView {
+            content
+                .frame(maxWidth: maximumContentWidth, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.vertical, 12)
+        }
+        .scrollIndicators(.hidden)
+        .background(Color(.systemGroupedBackground))
     }
 }
 
@@ -609,6 +626,8 @@ private struct FactRow: View {
                 Text(value)
                     .font(.subheadline.weight(.semibold))
                     .multilineTextAlignment(.trailing)
+                    .layoutPriority(1)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Text(provenance)
                 .font(.caption)
