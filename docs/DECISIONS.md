@@ -131,3 +131,13 @@ Append-only log template:
 - Reason: Cross-language decoding catches schema drift early.
 - Consequences: The repo should include a small TS check and a standalone Swift check script.
 - Revisit trigger: None.
+
+### 0013
+- ID: 0013
+- Date: 2026-09-05
+- Status: locked for the demo path
+- Decision: Use ARKit/LiDAR and camera/Vision on the iPhone, a server-owned OpenAI Agents SDK Realtime session for intelligence, and A2UI for agent-directed native forms and confirmations.
+- Context: The demo must show real spatial and visual evidence while keeping the agent conversational and the UI safe across the network boundary.
+- Reason: This preserves native capture quality, keeps API credentials and authoritative tools on the server, and constrains streamed UI to approved SwiftUI components.
+- Consequences: Decision 0007 no longer excludes A2UI. Agent output may propose only validated A2UI surfaces and typed tool calls; it never emits arbitrary client code or writes unvalidated facts.
+- Revisit trigger: The approved component catalog cannot express a required demo interaction, or Realtime cannot meet the demo's latency/reliability needs.

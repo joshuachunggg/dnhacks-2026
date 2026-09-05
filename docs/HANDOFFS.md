@@ -1,13 +1,13 @@
 # Handoffs
 
 ## Open handoffs
-- **Main/orchestrator -> future schema lane**: implement `packages/schemas/src/sitegraph.ts` and fixture validation.
-  - Need: canonical SiteGraph v0 and shared enums.
-  - Acceptance: TypeScript can validate the golden fixture.
+- **iOS lane -> device owner**: accept the four-screen modern-200A demo on a physical iPhone.
+  - Need: run `SiteGraphShell` from Xcode and tap Site, Panel, Charger Location, Results, Reset demo, and Use demo data.
+  - Acceptance: all fixture-backed screens render; reset clears state and reload restores it.
 
-- **Main/orchestrator -> future iOS lane**: create `apps/ios` shell and a minimal fixture-backed render path.
-  - Need: native app target or placeholder project structure.
-  - Acceptance: iOS can decode the same canonical fixture.
+- **Sprint 2 -> server, realtime, and iOS lanes**: define the `observation.added` boundary, then ship one Realtime-guided observation round-trip.
+  - Need: server-owned OpenAI Agents SDK Realtime session, typed API validation, and an iOS client connection with no long-lived API key.
+  - Acceptance: the agent asks for one fact; the phone submits one observation; the validated result reloads with evidence and status.
 
 - **Main/orchestrator -> future backend lane**: create `apps/server` with typed assessment storage and tool endpoints.
   - Need: event and tool contracts from `docs/CONTRACTS.md`.

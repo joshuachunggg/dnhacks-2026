@@ -7,9 +7,11 @@
 
 ```mermaid
 flowchart LR
-  I[iPhone capture + voice] --> U[Guided assessment UI]
-  U --> S[Validated SiteGraph]
-  S --> A[Primary field-engineer agent]
+  I[iPhone spatial + camera capture] --> U[Native guided UI / A2UI renderer]
+  I --> V[Vision proposals]
+  V --> S[Validated SiteGraph]
+  U <--> A[OpenAI Realtime field-engineer agent]
+  A --> S
   A --> T[Deterministic engineering tools]
   A --> C[Deterministic cost tools]
   T --> R[Assessment + handoff]
@@ -18,8 +20,9 @@ flowchart LR
 ```
 
 ## Boundaries
-- **iPhone capture lane**: ARKit anchors, raycasts, route measurements, selected frames, Vision OCR, and user confirmation.
-- **Agent lane**: conversation, tool choice, missing-data detection, and explanation.
+- **iPhone capture lane**: ARKit/LiDAR anchors, raycasts, route measurements, selected camera frames, Vision proposals, and user confirmation.
+- **Agent lane**: server-owned OpenAI Agents SDK Realtime session for conversation, tool choice, missing-data detection, and explanation.
+- **A2UI lane**: a small approved catalog of declarative prompts, forms, confirmations, and results that SwiftUI renders natively; actions return as typed events.
 - **Schema lane**: canonical SiteGraph types, enums, units, status, provenance, and validation.
 - **Engineering lane**: deterministic charger sizing, service/load screening, and scenario selection.
 - **Cost lane**: typed line items, range math, and assumptions.
@@ -52,17 +55,17 @@ Minimum entities:
 ## Data flow
 1. The user opens the native or web demo shell.
 2. The app creates or loads an assessment.
-3. Capture tools produce observations and evidence references.
-4. Validation converts model output to typed state.
-5. The agent sees missing data and asks for it in a structured way.
+3. Capture tools produce spatial anchors, observations, and evidence references.
+4. Vision and the realtime agent may propose facts, but validation converts them to typed state.
+5. The agent sees missing data and streams an approved A2UI form or confirmation.
 6. Deterministic tools compute charger, load, route, and cost outputs.
 7. The app renders the assessment and installer handoff.
 8. Fallback data keeps the narrative alive if live capture fails.
 
 ## Runtime boundaries
 - **Next.js root app**: present demo surface and current status.
-- **Future `apps/server`**: session state, tools, persistence, and API validation.
-- **Future `apps/ios`**: capture, anchors, and mobile workflow.
+- **`apps/server` (scaffold today)**: future Realtime session, tools, persistence, and API validation.
+- **`apps/ios` (seeded demo today)**: fixture decoder and four-screen mobile flow; future capture, anchors, and A2UI renderer.
 - **`packages/schemas`**: shared Zod types and JSON fixtures.
 - **`packages/fixtures`**: golden demo data.
 

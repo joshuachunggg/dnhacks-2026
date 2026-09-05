@@ -1,4 +1,4 @@
-# iOS lane scaffold
+# iOS seeded demo
 
 This directory is the native SwiftUI assessment shell starting point.
 
@@ -19,9 +19,9 @@ The app starts with the bundled modern-200A fixture loaded, and the top card tog
 - `Use demo data` when the demo has been cleared
 
 ## Status
-- Seeded demo scaffold only
-- No realtime, LiDAR, or live tool calls yet
-- Keep this lane isolated from shared contracts until the native target is wired up
+- Buildable iOS 17+ SwiftUI target with a bundled modern-200A fixture
+- Four tabs render Site, Panel, Charger Location, and Results state
+- No realtime, LiDAR, Vision, live tool calls, or persistence yet
 
 ## Intended demo state
 The first native shell should render a SiteGraph v0 assessment summary, including:

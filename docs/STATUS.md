@@ -4,7 +4,7 @@
 - `main` includes the native iOS target and `origin` is configured.
 - Current app shell is still the default Next.js scaffold, but the repo docs now reflect the real DNHacks thesis.
 - Shared contract work is moving to SiteGraph v0 plus golden fixtures.
-- The iOS shell is an iOS 17+ SwiftUI target and has been run on a physical iPhone; backend implementation is still pending.
+- The iOS shell is an iOS 17+ SwiftUI target; its original scaffold was run on a physical iPhone and the current four-screen seeded demo compiles for device. Backend implementation is still pending.
 
 ## Completed
 - Inspected Git state, branch, remote, and toolchain availability.
@@ -16,14 +16,15 @@
 - Scaffolded the iOS lane with a native SwiftUI starter state.
 - Added `apps/ios/SiteGraphShell.xcodeproj`, the `SiteGraphShell` scheme, and wired the SwiftUI scaffold into the target.
 - Verified the native scaffold runs on a physical iPhone.
+- Added the bundled modern-200A fixture, local Swift decoder, four-tab assessment demo, reset/reload control, and fixture-backed results/handoff display.
 - Scaffolded the backend lane with a typed placeholder manifest and draft envelope.
 - Scaffolded the demo lane with seeded fallback assets and reset notes.
 - Added the Austin/Austin Energy source card and cost anchor notes in `research/`.
 - Pushed commit `2f9811c` to `origin/main`.
 
 ## Current work
-- Sprint 1: build the guided seeded assessment flow and Swift fixture boundary.
-- Then build the live agent plus first observation round-trip through a typed backend API.
+- Get physical-device acceptance for the current seeded demo.
+- Sprint 2: build the live agent plus first observation round-trip through a typed backend API.
 
 ## Blockers
 - The repo still needs the guided iPhone workflow, live agent, backend service, and one end-to-end observation path.
