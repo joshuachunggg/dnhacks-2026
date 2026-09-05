@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Next.js / build output
+.next/
+out/
+dist/
+coverage/
+.vercel/
+.turbo/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local worktrees
+.worktrees/
