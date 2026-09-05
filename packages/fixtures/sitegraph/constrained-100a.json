@@ -1,6 +1,11 @@
 {
   "schemaVersion": "0.1.0",
   "assessmentId": "assessment-constrained-100a",
+  "evidence": [
+    { "id": "frame-101", "type": "image_frame", "label": "Detached garage wall capture" },
+    { "id": "frame-110", "type": "image_frame", "label": "Legacy main panel capture" },
+    { "id": "route-constrained-100a", "type": "measurement", "label": "Constrained home route measurement" }
+  ],
   "site": {
     "id": "site-constrained-100a",
     "label": "Constrained 100 A older home",

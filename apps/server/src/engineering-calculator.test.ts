@@ -6,6 +6,9 @@ import test from 'node:test';
 import { decodeSiteGraph, SiteGraphSchema } from '../../../packages/schemas/src/sitegraph';
 import { runEngineeringScenario, applyEngineeringScenario } from './engineering-calculator';
 
+const TRUSTED_TIMESTAMP = '2030-01-02T03:04:05.000Z';
+const DEFAULT_TRUSTED_TIMESTAMP = '1970-01-01T00:00:00.000Z';
+
 function loadFixture(name: string) {
   const path = join(process.cwd(), 'packages/fixtures/sitegraph', `${name}.json`);
   return decodeSiteGraph(JSON.parse(readFileSync(path, 'utf8')));
@@ -133,6 +136,10 @@ test('selects the earliest usable positive feet route when other route facts are
   const [route] = modern.measurements;
   const result = runEngineeringScenario({
     ...modern,
+    evidence: [
+      ...modern.evidence,
+      { id: 'route-evidence-usable', type: 'measurement', label: 'Usable route measurement' },
+    ],
     measurements: [
       { ...route, id: 'route-contradicted', value: 99, status: 'contradicted' },
       { ...route, id: 'route-meters', value: 5, unit: 'm' },
@@ -151,7 +158,7 @@ test('rejects applying a result from a different assessment', () => {
   const constrainedResult = runEngineeringScenario(loadFixture('constrained-100a'));
 
   assert.throws(
-    () => applyEngineeringScenario(loadFixture('modern-200a'), constrainedResult),
+    () => applyEngineeringScenario(loadFixture('modern-200a'), constrainedResult, DEFAULT_TRUSTED_TIMESTAMP),
     /result assessment origin does not match the input assessment/i,
   );
 });
@@ -159,7 +166,7 @@ test('rejects applying a result from a different assessment', () => {
 test('atomically applies a validated deterministic result with schema-permitted scenario status', () => {
   const graph = loadFixture('modern-200a');
   const result = runEngineeringScenario(graph, '2030-01-02T03:04:05.000Z');
-  const applied = applyEngineeringScenario(graph, result);
+  const applied = applyEngineeringScenario(graph, result, TRUSTED_TIMESTAMP);
 
   assert.equal(applied.toolRuns.at(-1)?.timestamp, '2030-01-02T03:04:05.000Z');
   assert.equal(applied.toolRuns.at(-1)?.resultStatus, 'conditional');
@@ -172,7 +179,7 @@ test('atomically applies a validated deterministic result with schema-permitted 
 test('persists the typed calculation origin with the applied ToolRun output', () => {
   const graph = loadFixture('modern-200a');
   const result = runEngineeringScenario(graph, '2030-01-02T03:04:05.000Z');
-  const applied = applyEngineeringScenario(graph, result);
+  const applied = applyEngineeringScenario(graph, result, TRUSTED_TIMESTAMP);
   const storedToolRun = applied.toolRuns.find((toolRun) => toolRun.id === result.toolRun.id);
 
   assert.ok(storedToolRun);
@@ -183,8 +190,8 @@ test('persists the typed calculation origin with the applied ToolRun output', ()
 test('reapplying the same deterministic result replaces its stable ToolRun', () => {
   const graph = loadFixture('modern-200a');
   const result = runEngineeringScenario(graph, '2030-01-02T03:04:05.000Z');
-  const appliedOnce = applyEngineeringScenario(graph, result);
-  const appliedTwice = applyEngineeringScenario(appliedOnce, result);
+  const appliedOnce = applyEngineeringScenario(graph, result, TRUSTED_TIMESTAMP);
+  const appliedTwice = applyEngineeringScenario(appliedOnce, result, TRUSTED_TIMESTAMP);
 
   assert.equal(
     appliedTwice.toolRuns.filter((toolRun) => toolRun.id === result.toolRun.id).length,
@@ -224,7 +231,7 @@ test('rejects schema-valid result tampering that does not change its origin snap
   for (const tamperedResult of tamperedResults) {
     const targetGraph = tamperedResult === tamperedResults.at(-1) ? insufficientGraph : graph;
     assert.throws(
-      () => applyEngineeringScenario(targetGraph, tamperedResult),
+      () => applyEngineeringScenario(targetGraph, tamperedResult, TRUSTED_TIMESTAMP),
       /result does not match the canonical deterministic calculation/i,
     );
   }
@@ -239,7 +246,7 @@ test('rejects a result when only the proposed EVSE wall changes', () => {
   };
 
   assert.throws(
-    () => applyEngineeringScenario(changedGraph, result),
+    () => applyEngineeringScenario(changedGraph, result, DEFAULT_TRUSTED_TIMESTAMP),
     /result inputs do not match the current calculation-relevant graph facts/i,
   );
 });
@@ -289,7 +296,7 @@ test('pre-flight matrix rejects stale results after each output-affecting input 
 
   for (const changedGraph of changedGraphs) {
     assert.throws(
-      () => applyEngineeringScenario(changedGraph, result),
+      () => applyEngineeringScenario(changedGraph, result, DEFAULT_TRUSTED_TIMESTAMP),
       /result inputs do not match the current calculation-relevant graph facts/i,
     );
   }
@@ -329,6 +336,55 @@ test('returns insufficient_data for an evidenced 1 A service with otherwise usab
   assert.deepEqual(result.installerHandoff.bullets, ['Capture evidence confirming a plausible panel service-amperage rating of at least 60 A.']);
 });
 
+test('accepts a valid non-fixture evidence record for panel and route facts', () => {
+  const modern = loadFixture('modern-200a');
+  const result = runEngineeringScenario({
+    ...modern,
+    evidence: [{ id: 'captured-panel-route', type: 'measurement', label: 'Captured panel and route measurement' }],
+    electricalPanel: { ...modern.electricalPanel, evidenceIds: ['captured-panel-route'] },
+    measurements: [{ ...modern.measurements[0], evidenceIds: ['captured-panel-route'] }],
+  });
+
+  assert.equal(result.status, 'professional_verification_required');
+  assert.equal(result.recommendation.chargerCurrentAmps, 32);
+});
+
+test('returns insufficient_data when panel or route evidence references do not resolve', () => {
+  const modern = loadFixture('modern-200a');
+  const unknownPanel = runEngineeringScenario({
+    ...modern,
+    electricalPanel: { ...modern.electricalPanel, evidenceIds: ['unknown-panel-evidence'] },
+  });
+  const replacedRoute = runEngineeringScenario({
+    ...modern,
+    measurements: [{ ...modern.measurements[0], evidenceIds: ['replaced-route-evidence'] }],
+  });
+
+  for (const result of [unknownPanel, replacedRoute]) {
+    assert.equal(result.status, 'insufficient_data');
+    assert.deepEqual(result.recommendation, { chargerCurrentAmps: null, label: null, highCurrentRecommended: false });
+  }
+});
+
+test('rejects isolated and coordinated calculation timestamp tampering against the trusted invocation timestamp', () => {
+  const graph = loadFixture('modern-200a');
+  const result = runEngineeringScenario(graph, TRUSTED_TIMESTAMP);
+  const tamperedTimestamp = '2030-01-02T03:04:06.000Z';
+  const isolated = { ...result, toolRun: { ...result.toolRun, timestamp: tamperedTimestamp } };
+  const coordinated = {
+    ...result,
+    origin: { ...result.origin, calculationTimestamp: tamperedTimestamp },
+    toolRun: { ...result.toolRun, timestamp: tamperedTimestamp },
+  };
+
+  for (const tampered of [isolated, coordinated]) {
+    assert.throws(
+      () => applyEngineeringScenario(graph, tampered, TRUSTED_TIMESTAMP),
+      /trusted calculation timestamp/i,
+    );
+  }
+});
+
 test('rejects a result when calculation-relevant panel facts change in the same assessment', () => {
   const graph = loadFixture('modern-200a');
   const result = runEngineeringScenario(graph);
@@ -338,7 +394,7 @@ test('rejects a result when calculation-relevant panel facts change in the same 
   };
 
   assert.throws(
-    () => applyEngineeringScenario(changedGraph, result),
+    () => applyEngineeringScenario(changedGraph, result, DEFAULT_TRUSTED_TIMESTAMP),
     /result inputs do not match the current calculation-relevant graph facts/i,
   );
 });

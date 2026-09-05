@@ -121,6 +121,7 @@ export const AssessmentStatusSchema = z.enum([
 export const SiteGraphSchema = z.object({
   schemaVersion: z.literal(SiteGraphVersion),
   assessmentId: z.string(),
+  evidence: z.array(EvidenceRefSchema).default([]),
   site: z.object({
     id: z.string(),
     label: z.string(),
@@ -196,6 +197,7 @@ export const SiteGraphSchema = z.object({
 }).strict();
 
 export type SiteGraphV0 = z.infer<typeof SiteGraphSchema>;
+export type EvidenceRef = z.infer<typeof EvidenceRefSchema>;
 export type Observation = z.infer<typeof ObservationSchema>;
 export type ObservationAddedEvent = z.infer<typeof ObservationAddedEventSchema>;
 export type Measurement = z.infer<typeof MeasurementSchema>;

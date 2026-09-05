@@ -3,10 +3,12 @@
 ## Open handoffs
 - **Engineering/server -> API + iOS lanes**: wire the completed pure engineering calculator into the validated assessment flow and render the typed result.
   - Available: `runEngineeringScenario(input)` accepts only SiteGraph v0 and returns a validated result with provenance, status, handoff, disclaimer, and explicit insufficient-data outcome.
+  - Required caller update: capture the calculation timestamp at invocation and call `applyEngineeringScenario(graph, result, capturedTimestamp)`; do not derive it from `result`. The old two-argument API path is temporary compatibility only and lacks an external timestamp trust anchor.
   - Acceptance: a changed SiteGraph input yields the newly computed result in the iPhone with status and warnings.
 
 - **Cost/server -> API + iOS lanes**: wire the completed separate deterministic cost contract into the validated assessment flow and render its typed status.
-  - Available: `runCostScenario(input)` and `applyCostScenario(graph, result)` accept SiteGraph v0 only and return/record source-limited Austin provenance, fixture-scoped non-quote line items, explicit range status, handoff, and insufficient-data behavior.
+  - Available: `runCostScenario(input)` and `applyCostScenario(graph, result, capturedTimestamp)` accept SiteGraph v0 only and return/record source-limited Austin provenance, fixture-scoped non-quote line items, explicit range status, handoff, and insufficient-data behavior.
+  - Required caller update: when invoking with a controlled non-epoch timestamp, pass the invocation-captured timestamp to application; never trust result-origin or ToolRun timestamps as the expected value. The two-argument form is temporary compatibility only and lacks an external timestamp trust anchor.
   - Acceptance: iOS distinguishes `preliminary_range`, `partial_range` (unpriced panel/service upgrade), and `insufficient_data`; it must not label an allowance as a quote.
 
 - **Sprint 2 -> Realtime + iOS lanes**: add a server-owned Realtime session that asks for one missing fact and submits it through the existing `observation.added` boundary.

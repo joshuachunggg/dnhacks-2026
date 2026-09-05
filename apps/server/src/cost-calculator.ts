@@ -19,7 +19,7 @@ const AUSTIN_PERMIT_SOURCE = 'Austin Energy home-charging guidance (permit and i
 const AUSTIN_SOURCE_AHJ = 'City of Austin';
 const ACCEPTABLE_STATUSES = new Set(['proposed', 'confirmed', 'professionally_verified', 'calculated']);
 const ACCEPTABLE_SOURCE_TYPES = new Set(['measured', 'visually_observed', 'ocr_extracted', 'user_supplied', 'externally_retrieved', 'professionally_verified', 'calculated']);
-const FIXTURE_EVIDENCE_IDS = new Set(['frame-001', 'frame-010', 'frame-011', 'frame-101', 'frame-110']);
+
 
 const CostInputSnapshotSchema = z.object({
   jurisdiction: z.object({ city: z.string(), state: z.string(), ahj: z.string() }).strict(),
@@ -53,14 +53,18 @@ export const CostScenarioResultSchema = z.object({
 }).strict();
 export type CostScenarioResult = z.infer<typeof CostScenarioResultSchema>;
 
-function hasUsableEvidence(fact: { status: string; sourceType: string; evidenceIds: string[] }): boolean {
+function hasUsableEvidence(
+  graph: SiteGraphV0,
+  fact: { status: string; sourceType: string; evidenceIds: string[] },
+): boolean {
   return ACCEPTABLE_STATUSES.has(fact.status) && ACCEPTABLE_SOURCE_TYPES.has(fact.sourceType)
-    && fact.evidenceIds.length > 0 && fact.evidenceIds.every((evidenceId) => FIXTURE_EVIDENCE_IDS.has(evidenceId));
+    && fact.evidenceIds.length > 0
+    && fact.evidenceIds.every((evidenceId) => graph.evidence.some((evidence) => evidence.id === evidenceId));
 }
 
 function selectUsableRoute(graph: SiteGraphV0) {
   return graph.measurements.find((measurement) => measurement.kind === 'route_length'
-    && hasUsableEvidence(measurement) && measurement.value > 0 && measurement.value <= 10000
+    && hasUsableEvidence(graph, measurement) && measurement.value > 0 && measurement.value <= 10000
     && (measurement.unit === 'ft' || measurement.unit === 'feet'));
 }
 
@@ -89,7 +93,7 @@ export function runCostScenario(input: unknown, calculationTimestamp = DETERMINI
   const timestamp = z.string().datetime({ offset: true }).parse(calculationTimestamp);
   const route = selectUsableRoute(graph);
   const panel = graph.electricalPanel;
-  const panelUsable = hasUsableEvidence(panel) && panel.spareBreakerSpaces !== undefined
+  const panelUsable = hasUsableEvidence(graph, panel) && panel.spareBreakerSpaces !== undefined
     && (panel.breakerSpaceCount === undefined || panel.spareBreakerSpaces <= panel.breakerSpaceCount);
   const snapshot = snapshotCostInputs(graph, route);
   const origin = { assessmentId: graph.assessmentId, inputSnapshot: snapshot, inputFingerprint: fingerprintCostInputs(snapshot), calculationTimestamp: timestamp };
@@ -140,15 +144,22 @@ export function runCostScenario(input: unknown, calculationTimestamp = DETERMINI
 }
 
 /** Pure, typed adapter; it records a canonical cost ToolRun and replaces only this calculator's stable scenario. */
-export function applyCostScenario(input: SiteGraphV0, resultInput: CostScenarioResult): SiteGraphV0 {
+export function applyCostScenario(
+  input: SiteGraphV0,
+  resultInput: CostScenarioResult,
+  expectedCalculationTimestamp?: string,
+): SiteGraphV0 {
   const graph = SiteGraphSchema.parse(input);
   const result = CostScenarioResultSchema.parse(resultInput);
+  const trustedTimestamp = expectedCalculationTimestamp === undefined
+    ? result.origin.calculationTimestamp
+    : z.string().datetime({ offset: true }).parse(expectedCalculationTimestamp);
   if (result.origin.assessmentId !== graph.assessmentId) throw new Error('Result assessment origin does not match the input assessment.');
-  if (result.origin.calculationTimestamp !== result.toolRun.timestamp) throw new Error('Result canonical calculation timestamp does not match the ToolRun timestamp.');
+  if (result.origin.calculationTimestamp !== trustedTimestamp || result.toolRun.timestamp !== trustedTimestamp) throw new Error('Result does not match the trusted calculation timestamp.');
   const currentSnapshot = snapshotCostInputs(graph);
   const currentFingerprint = fingerprintCostInputs(currentSnapshot);
   if (result.origin.inputFingerprint !== fingerprintCostInputs(result.origin.inputSnapshot) || result.origin.inputFingerprint !== currentFingerprint || !isDeepStrictEqual(result.origin.inputSnapshot, currentSnapshot)) throw new Error('Result inputs do not match the current calculation-relevant graph facts.');
-  const canonical = runCostScenario(graph, result.toolRun.timestamp);
+  const canonical = runCostScenario(graph, trustedTimestamp);
   if (!isDeepStrictEqual(result, canonical)) throw new Error('Result does not match the canonical deterministic calculation.');
   const toolRun = ToolRunSchema.parse({ ...result.toolRun, output: { ...result.toolRun.output, origin: result.origin } });
   const scenarioId = `cost-scenario-${graph.assessmentId}`;

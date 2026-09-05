@@ -44,15 +44,19 @@ const EngineeringInputSnapshotSchema = z.object({
 
 type EngineeringInputSnapshot = z.infer<typeof EngineeringInputSnapshotSchema>;
 
-function hasUsableEvidence(fact: { status: string; sourceType: string; evidenceIds: string[] }): boolean {
+function hasUsableEvidence(
+  graph: SiteGraphV0,
+  fact: { status: string; sourceType: string; evidenceIds: string[] },
+): boolean {
   return ACCEPTABLE_STATUSES.has(fact.status)
     && ACCEPTABLE_SOURCE_TYPES.has(fact.sourceType)
-    && fact.evidenceIds.length > 0;
+    && fact.evidenceIds.length > 0
+    && fact.evidenceIds.every((evidenceId) => graph.evidence.some((evidence) => evidence.id === evidenceId));
 }
 
 function selectUsableRoute(graph: SiteGraphV0) {
   return graph.measurements.find((measurement) => measurement.kind === 'route_length'
-    && hasUsableEvidence(measurement)
+    && hasUsableEvidence(graph, measurement)
     && measurement.value > 0
     && measurement.value <= 10000
     && (measurement.unit === 'ft' || measurement.unit === 'feet'));
@@ -97,6 +101,7 @@ export const EngineeringScenarioResultSchema = z.object({
     assessmentId: z.string(),
     inputSnapshot: EngineeringInputSnapshotSchema,
     inputFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+    calculationTimestamp: z.string().datetime({ offset: true }),
   }).strict(),
   status: AssessmentStatusSchema,
   recommendation: z.object({
@@ -123,7 +128,7 @@ export function runEngineeringScenario(
   const panel = graph.electricalPanel;
   const serviceAmps = panel.serviceAmps;
   const spareBreakerSpaces = panel.spareBreakerSpaces;
-  const panelEvidenceUsable = hasUsableEvidence(panel);
+  const panelEvidenceUsable = hasUsableEvidence(graph, panel);
   const serviceAmpsUsable = panelEvidenceUsable
     && serviceAmps !== undefined
     && serviceAmps >= MINIMUM_PLAUSIBLE_SERVICE_AMPS
@@ -141,6 +146,7 @@ export function runEngineeringScenario(
     assessmentId: graph.assessmentId,
     inputSnapshot,
     inputFingerprint: fingerprintEngineeringInputs(inputSnapshot),
+    calculationTimestamp: timestamp,
   };
   const missingInputs = [
     ...(!panelRatingsConsistent
@@ -281,11 +287,18 @@ export function runEngineeringScenario(
 export function applyEngineeringScenario(
   input: SiteGraphV0,
   resultInput: EngineeringScenarioResult,
+  expectedCalculationTimestamp?: string,
 ): SiteGraphV0 {
   const graph = SiteGraphSchema.parse(input);
   const result = EngineeringScenarioResultSchema.parse(resultInput);
+  const trustedTimestamp = expectedCalculationTimestamp === undefined
+    ? result.origin.calculationTimestamp
+    : z.string().datetime({ offset: true }).parse(expectedCalculationTimestamp);
   if (result.origin.assessmentId !== graph.assessmentId) {
     throw new Error('Result assessment origin does not match the input assessment.');
+  }
+  if (result.origin.calculationTimestamp !== trustedTimestamp || result.toolRun.timestamp !== trustedTimestamp) {
+    throw new Error('Result does not match the trusted calculation timestamp.');
   }
   const currentInputSnapshot = snapshotEngineeringInputs(graph);
   const currentInputFingerprint = fingerprintEngineeringInputs(currentInputSnapshot);
@@ -296,7 +309,7 @@ export function applyEngineeringScenario(
   ) {
     throw new Error('Result inputs do not match the current calculation-relevant graph facts.');
   }
-  const canonicalResult = runEngineeringScenario(graph, result.toolRun.timestamp);
+  const canonicalResult = runEngineeringScenario(graph, trustedTimestamp);
   if (!isDeepStrictEqual(result, canonicalResult)) {
     throw new Error('Result does not match the canonical deterministic calculation.');
   }

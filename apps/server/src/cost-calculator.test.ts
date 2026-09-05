@@ -6,6 +6,8 @@ import test from 'node:test';
 import { decodeSiteGraph } from '../../../packages/schemas/src/sitegraph';
 import { applyCostScenario, CostScenarioResultSchema, runCostScenario } from './cost-calculator';
 
+const TRUSTED_TIMESTAMP = '2030-01-02T03:04:05.000Z';
+
 function loadFixture(name: string) {
   const path = join(process.cwd(), 'packages/fixtures/sitegraph', `${name}.json`);
   return decodeSiteGraph(JSON.parse(readFileSync(path, 'utf8')));
@@ -63,6 +65,19 @@ test('returns no numeric range when a panel or route evidence ID does not resolv
   }
 });
 
+test('accepts a valid non-fixture evidence record for priced panel and route facts', () => {
+  const modern = loadFixture('modern-200a');
+  const result = runCostScenario({
+    ...modern,
+    evidence: [{ id: 'captured-price-input', type: 'measurement', label: 'Captured panel and route measurement' }],
+    electricalPanel: { ...modern.electricalPanel, evidenceIds: ['captured-price-input'] },
+    measurements: [{ ...modern.measurements[0], evidenceIds: ['captured-price-input'] }],
+  });
+
+  assert.equal(result.status, 'professional_verification_required');
+  assert.ok(result.total);
+});
+
 test('returns no numeric range or Austin fee anchor for an incompatible Austin-area AHJ', () => {
   const modern = loadFixture('modern-200a');
   const result = runCostScenario({ ...modern, site: { ...modern.site, jurisdiction: { ...modern.site.jurisdiction, ahj: 'Travis County' } } });
@@ -101,15 +116,15 @@ test('returns a Zod-validated result with line-item totals that equal the declar
 test('adapter rejects stale, tampered, and wrong-assessment results and is idempotent for a canonical result', () => {
   const graph = loadFixture('modern-200a');
   const result = runCostScenario(graph, '2030-01-02T03:04:05.000Z');
-  const appliedOnce = applyCostScenario(graph, result);
-  const appliedTwice = applyCostScenario(appliedOnce, result);
+  const appliedOnce = applyCostScenario(graph, result, TRUSTED_TIMESTAMP);
+  const appliedTwice = applyCostScenario(appliedOnce, result, TRUSTED_TIMESTAMP);
 
   assert.equal(appliedOnce.costScenarios.filter((scenario) => scenario.id === 'cost-scenario-assessment-modern-200a').length, 1);
   assert.deepEqual(appliedTwice, appliedOnce);
   assert.deepEqual(appliedOnce.toolRuns.find((toolRun) => toolRun.id === result.toolRun.id)?.output.origin, result.origin);
-  assert.throws(() => applyCostScenario({ ...graph, measurements: [{ ...graph.measurements[0], value: 44 }] }, result), /inputs do not match/i);
-  assert.throws(() => applyCostScenario(graph, { ...result, total: { ...result.total!, expected: 1600 } }), /canonical deterministic calculation/i);
-  assert.throws(() => applyCostScenario(loadFixture('constrained-100a'), result), /assessment origin/i);
+  assert.throws(() => applyCostScenario({ ...graph, measurements: [{ ...graph.measurements[0], value: 44 }] }, result, TRUSTED_TIMESTAMP), /inputs do not match/i);
+  assert.throws(() => applyCostScenario(graph, { ...result, total: { ...result.total!, expected: 1600 } }, TRUSTED_TIMESTAMP), /canonical deterministic calculation/i);
+  assert.throws(() => applyCostScenario(loadFixture('constrained-100a'), result, TRUSTED_TIMESTAMP), /assessment origin/i);
 });
 
 test('adapter rejects a result whose canonical calculation timestamp was changed', () => {
@@ -117,5 +132,24 @@ test('adapter rejects a result whose canonical calculation timestamp was changed
   const result = runCostScenario(graph, '2030-01-02T03:04:05.000Z');
   const timestampTampered = { ...result, toolRun: { ...result.toolRun, timestamp: '2030-01-02T03:04:06.000Z' } };
 
-  assert.throws(() => applyCostScenario(graph, timestampTampered), /canonical calculation timestamp/i);
+  assert.throws(() => applyCostScenario(graph, timestampTampered, TRUSTED_TIMESTAMP), /trusted calculation timestamp/i);
+});
+
+test('adapter rejects isolated and coordinated timestamp tampering against the trusted invocation timestamp', () => {
+  const graph = loadFixture('modern-200a');
+  const result = runCostScenario(graph, TRUSTED_TIMESTAMP);
+  const tamperedTimestamp = '2030-01-02T03:04:06.000Z';
+  const isolated = { ...result, toolRun: { ...result.toolRun, timestamp: tamperedTimestamp } };
+  const coordinated = {
+    ...result,
+    origin: { ...result.origin, calculationTimestamp: tamperedTimestamp },
+    toolRun: { ...result.toolRun, timestamp: tamperedTimestamp },
+  };
+
+  for (const tampered of [isolated, coordinated]) {
+    assert.throws(
+      () => applyCostScenario(graph, tampered, TRUSTED_TIMESTAMP),
+      /trusted calculation timestamp/i,
+    );
+  }
 });
