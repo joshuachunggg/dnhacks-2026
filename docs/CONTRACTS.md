@@ -75,6 +75,14 @@ Each tool must return:
 - `applyEngineeringScenario(graph, result)` is a typed, validated, pure adapter. It replaces the stable deterministic ToolRun by ID (so applying the same result is idempotent), replaces its deterministic engineering scenario, and updates `finalAssessment` in one returned validated graph. A result contains a typed snapshot plus SHA-256 fingerprint of the calculation-relevant panel and selected-route facts/evidence; application rejects stale results when those current graph inputs no longer match. Since `EngineeringScenario.status` does not permit `professional_verification_required`, it maps that assessment state to scenario `conditional` (or preserves `insufficient_data`).
 - Tool provenance contains usable panel and route evidence IDs, source/status in `inputSummary`, and an injected calculation timestamp (default is a deterministic epoch value), never the prior `finalAssessment.timestamp`.
 
+## Deterministic cost scenario v0
+`apps/server/src/cost-calculator.ts` exports pure `runCostScenario(input)` and `CostScenarioResultSchema`, plus `applyCostScenario(graph, result)` for a later typed state boundary. Input and output are Zod-validated SiteGraph v0 values; the calculator performs no I/O, network calls, clock reads, or state writes.
+
+- This demo contract only applies the Austin, TX source card in `research/SOURCES.md`. It requires usable, evidence-backed panel spare-space and positive feet-based route facts. Missing, contradicted, superseded, evidence-free, or out-of-jurisdiction facts return `insufficient_data` with `total: null` and no numeric scenario; the calculator does not infer a price.
+- For usable inputs, the range is the sum of explicit line-item low/expected/high values: fixture-scoped EVSE and route-install allowances plus the Austin $166.99 advisory residential-electric-fee anchor. Fixture allowances are expressly not vendor, contractor, or installer quotes. The Austin anchor is not EVSE-specific and requires AHJ confirmation.
+- Any priced result remains `professional_verification_required` / `conditional`, not an approval. Permit scope/fee, inspection, equipment, routing, conductor/breaker, and electrician review remain open. Zero evidenced spare spaces produces only a `partial_range`: panel/subpanel/service-upgrade scope and cost are explicitly unknown and excluded, never silently included or quoted.
+- Result provenance carries the source limitations, inputs/evidence, deterministic timestamp, typed snapshot, and SHA-256 fingerprint. `applyCostScenario` rejects assessment mismatch, stale inputs, and schema-valid result tampering by recomputing the canonical result; it replaces only its stable ToolRun/scenario IDs, making a canonical duplicate application idempotent. An insufficient-data result records no synthetic zero-dollar scenario.
+
 ## API boundary
 The current first server boundary accepts and returns only validated JSON:
 - `POST /api/assessments`

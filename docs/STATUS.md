@@ -26,19 +26,20 @@
 - Added the iOS live-round-trip control with a configurable server URL, explicit failure state, and fixture fallback preservation.
 - Aligned the bundled iOS modern-200A fixture with the canonical schema and added a regression test for that boundary.
 - Added the pure `runEngineeringScenario` contract with validated input/output, deterministic provenance, explicit insufficient-data handling, and fixture coverage for modern, constrained, and missing-data cases.
+- Added the pure `runCostScenario` contract with Zod-validated results, source-limited Austin permit anchor provenance, fixture-scoped non-quote line items, route-sensitive range math, explicit insufficient-data and unpriced-upgrade states, and a safe deterministic application adapter.
 - Pushed commit `2f9811c` to `origin/main`.
 
 ## Current work
-- Wire deterministic engineering results into the validated API and iOS result rendering, then add the separate cost tool run.
+- Wire deterministic engineering and cost results into the validated API and iOS result rendering; preserve the cost tool's non-quote, partial-range, and insufficient-data states.
 - Then add the Realtime agent on top of the validated observation boundary.
 
 ## Blockers
-- The repo still needs deterministic-tool API/iOS integration, the separate cost tool, the live agent, and durable backend persistence.
+- The repo still needs deterministic-tool API/iOS integration, the live agent, and durable backend persistence.
 - Simulator services are unavailable to this terminal environment; physical-device deployment is verified instead.
-- Jurisdiction and cost data are still fixture-backed only.
+- Jurisdiction data and non-government cost allowances are intentionally demo/fixture-scoped; live quotes and jurisdiction expansion remain out of scope.
 
 ## Next integration point
-- Render the existing deterministic engineering result through the validated API and iPhone flow.
+- Render the existing deterministic engineering and cost results through the validated API and iPhone flow, preserving cost status and non-quote language.
 
 ## Demo readiness
 - Status: not ready yet
