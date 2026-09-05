@@ -37,6 +37,7 @@ test('POST /api/assessments/:id/tools/runEngineeringScenario calculates and pers
   assert.equal(assessment.toolRuns.at(-1).toolName, 'runEngineeringScenario');
   assert.equal(assessment.engineeringScenarios.at(-1).chargerCurrentAmps, 32);
   assert.match(assessment.toolRuns.at(-1).timestamp, /^\d{4}-\d{2}-\d{2}T/);
+  assert.equal(assessment.toolRuns.at(-1).output.origin.calculationTimestamp, assessment.toolRuns.at(-1).timestamp);
 });
 
 test('POST /api/assessments/:id/tools/runEngineeringScenario rejects invalid JSON and client-supplied output', async () => {

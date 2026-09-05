@@ -1,15 +1,13 @@
 import { z } from 'zod';
 
-import {
-  assessmentStore,
-} from '../../../../../../../apps/server/src/assessment-store';
-import { runEngineeringScenario } from '../../../../../../../apps/server/src/engineering-calculator';
+import { assessmentStore } from '../../../../../../../apps/server/src/assessment-store';
+import { runCostScenario } from '../../../../../../../apps/server/src/cost-calculator';
 
 interface AssessmentRouteContext {
   params: Promise<{ assessmentId: string }>;
 }
 
-const RunEngineeringScenarioRequestSchema = z.object({}).strict();
+const RunCostScenarioRequestSchema = z.object({}).strict();
 
 function validationErrorResponse(error: z.ZodError): Response {
   return Response.json(
@@ -27,15 +25,15 @@ export async function POST(request: Request, context: AssessmentRouteContext): P
   }
 
   try {
-    RunEngineeringScenarioRequestSchema.parse(input);
+    RunCostScenarioRequestSchema.parse(input);
     const { assessmentId } = await context.params;
     const assessment = assessmentStore.get(assessmentId);
     if (!assessment) {
       return Response.json({ error: 'assessment_not_found' }, { status: 404 });
     }
     const calculationTimestamp = new Date().toISOString();
-    const result = runEngineeringScenario(assessment, calculationTimestamp);
-    const updatedAssessment = assessmentStore.applyEngineeringScenario(assessmentId, result, calculationTimestamp);
+    const result = runCostScenario(assessment, calculationTimestamp);
+    const updatedAssessment = assessmentStore.applyCostScenario(assessmentId, result, calculationTimestamp);
     return Response.json({ assessment: updatedAssessment });
   } catch (error) {
     if (error instanceof z.ZodError) {
