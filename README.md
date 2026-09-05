@@ -6,7 +6,7 @@ Spatial AI field-engineer demo for residential EV charger feasibility.
 - Next.js + TypeScript scaffold is live at the repo root.
 - Canonical SiteGraph v0, fixtures, and validation scripts are present.
 - `apps/ios` contains a buildable iOS 17+ SwiftUI target with a fixture-backed four-screen demo.
-- The backend is still a scaffold; no live agent, capture, or end-to-end assessment path exists yet.
+- The backend has validated in-memory assessment, engineering, and fixture-scoped cost endpoints. The seeded local HTTP path and iOS simulator build are verified; live agent, capture, durable persistence, and updated physical-device acceptance remain open.
 
 ## Demo thesis
 A phone should turn observations of a physical home into evidence-backed structured state that a realtime agent can reason over, explain, and hand off to an electrician. This is a spatial AI field-engineer demo for residential EV charger assessment. The hackathon demo focuses on one question:

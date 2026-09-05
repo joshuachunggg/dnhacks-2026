@@ -4,7 +4,7 @@
 
 Show a structured **preliminary** EV-charger assessment: evidence and user input are kept separate, deterministic fixture outputs are visible, and the handoff states what an electrician or AHJ must still verify.
 
-Do not describe this as a live end-to-end assessment. The native shell currently renders a bundled modern fixture and can submit one confirmed panel-label observation to the validated API. Live capture, Realtime orchestration, engineering-result API/iPhone rendering, separate cost-tool execution, persistence, and an exportable handoff still require integration. This rehearsal uses seeded SiteGraph v0 artifacts to demonstrate those intended result states without claiming they were computed in the phone during the presentation.
+Do not describe this as a live end-to-end field assessment. The native shell creates the bundled modern fixture assessment, runs deterministic engineering and cost tools through the validated API, and renders returned provenance, requirements, handoff, and cost status. The local HTTP sequence and simulator build are verified; this updated flow is not yet accepted on a physical device. Live capture, Realtime orchestration, durable persistence, and handoff export still require integration. This rehearsal uses seeded SiteGraph v0 artifacts and fixture-scoped assumptions; do not claim they are current field observations or quotes.
 
 Safety language to read if asked: “This assessment is preliminary and based on visible evidence, user input, and deterministic checks. Final electrical decisions require a licensed electrician or the authority having jurisdiction.” Do not direct a consumer to open a panel, remove a dead front, touch wiring, bypass permitting, or perform electrical work.
 
@@ -12,7 +12,7 @@ Safety language to read if asked: “This assessment is preliminary and based on
 
 | Path | Rehearsal use | Current availability | Required integration before a live claim |
 | --- | --- | --- | --- |
-| [`../demo/assets/seeded-assessment-modern-200a.json`](../demo/assets/seeded-assessment-modern-200a.json) | Primary 200 A modern-home story: 32 A preliminary option; 48 A conditional. | Bundled modern fixture is rendered by the native shell. A documented physical-iPhone round trip exists only for one panel-label observation. | Run and render the deterministic engineering result and cost tool through the API/iPhone flow. |
+| [`../demo/assets/seeded-assessment-modern-200a.json`](../demo/assets/seeded-assessment-modern-200a.json) | Primary 200 A modern-home story: 32 A preliminary option; 48 A conditional. | The native shell creates this fixture on the local API, runs engineering then cost, and renders the returned assessment. The path is HTTP- and simulator-verified. | Updated physical-device acceptance; live capture and Realtime remain separate work. |
 | [`../demo/assets/seeded-assessment-constrained-100a.json`](../demo/assets/seeded-assessment-constrained-100a.json) | Older 100 A / detached-garage contrast: constrained lower-current path; higher-power option is not recommended as-is. | Rehearsal artifact only; it is not selectable in the current native shell. | Fixture picker/import and result rendering in the app. |
 | [`../demo/assets/seeded-assessment-insufficient-data.json`](../demo/assets/seeded-assessment-insufficient-data.json) | Honest missing-data outcome: no recommendation or invented price. | Rehearsal artifact only; it is not selectable in the current native shell. | Fixture picker/import and missing-data UI in the app. |
 
@@ -20,24 +20,24 @@ All three are seeded demo data, not field observations. Their source, status, ev
 
 ## Reset before every run
 
-1. Start on the native shell’s **Site** tab. If fixture data is visible, tap **Reset demo**, then **Use demo data**. This is the currently implemented reset/reload sequence for the bundled modern fixture; it is not a one-action restore.
+1. Start on the native shell’s **Site** tab and tap **Reset demo** to restore the bundled modern fixture and clear transient state.
 2. Leave the shell on **Site** and clear the Server URL/status only if the network-failure branch was rehearsed. The local modern fixture must remain loaded before proceeding.
 3. Keep the three files above open locally in this order: modern, constrained, insufficient-data. They are the disclosed artifact fallback; do not edit them during a run.
 4. State the run mode before speaking: **native fixture shell**, **validated observation round trip**, or **artifact fallback**. Never call artifact fallback live capture or a live calculation.
 
-The reset/reload control and local-fixture preservation are the only reset/fallback behavior currently implemented in the iOS shell. A one-action reset and in-app switching among all three fixtures are required integration work, not accepted device behavior.
+One-action reset and local-fixture preservation are implemented for the modern fixture. In-app switching among all three fixtures remains integration work and is not accepted device behavior.
 
 ## 4-minute primary rehearsal — modern 200 A
 
 | Time | Presenter action | Say / show | Provenance boundary |
 | --- | --- | --- | --- |
-| 0:00 | Declare **native fixture shell** and open **Site**. | “This shell is reading a seeded SiteGraph assessment; the live capture and tool orchestration are not wired here yet.” Show assessment ID and jurisdiction. | Address/jurisdiction are seeded fixture fields, not current retrieval. |
+| 0:00 | Declare **seeded live-tool demo** and open **Site**. | “This shell creates a seeded SiteGraph assessment, then runs deterministic engineering and cost tools on the local server. Live capture and Realtime are not wired here.” Show assessment ID and jurisdiction. | Address/jurisdiction are seeded fixture fields, not current retrieval. |
 | 0:25 | Open **Panel**. | Show Square D / QO, 200 A, 12 visible spare spaces, confidence, source types, and evidence IDs. “Visible spaces do not establish load capacity.” | Panel facts are proposed/visually observed or OCR-extracted fixture values. |
 | 0:55 | Open **Charger Location**. | Show the user-supplied garage-west-wall anchor and 31 ft calculated route estimate. | Location is user-supplied; route is a calculated estimate with evidence and assumptions. |
-| 1:20 | Open **Results**. | Compare the 32 A preliminary option with the conditional 48 A option. Point to the load-screen tool run, assumptions, warnings, and unresolved electrician checks. | Results are seeded deterministic-tool output; they are not computed by the current app session. |
-| 1:55 | Show cost range and line items. | “This is a fixture-backed estimate, not a quote: $1,400–$3,200 with hardware and labor assumptions.” | Cost scenario is seeded; no separate live cost tool is integrated. |
+| 1:20 | Run the tool flow and open **Results**. | Compare the preliminary option with the conditional path. Point to the returned tool run, assumptions, warnings, and unresolved electrician checks. | Inputs are seeded; the result is calculated by the local server in this session. |
+| 1:55 | Show cost range and line items. | “This is a fixture-scoped planning range, not a quote; panel or service upgrades are excluded if the range is partial.” | Cost is calculated by the local server from seeded fixture inputs; it is not a contractor quote. |
 | 2:20 | Show installer handoff. | Read the proposed wall, panel identity, best current demo option, and professional-verification items. | Handoff is seeded assessment content; export is not implemented. |
-| 2:45 | Optionally use **Confirm panel label with live API** with a known reachable local server. | “This confirms one observation, reloads validated state, and is separate from capture or engineering execution.” | The verified path is one observation round trip only. |
+| 2:45 | Point to tool provenance and local/fallback indicator. | “The calculations are server-side and deterministic; local intent is not used in the current calculator.” | Live capture and Realtime are not implied. |
 | 3:15 | Return to Results. | Repeat the preliminary disclaimer and invite the constrained/missing-data contrasts. | Do not imply approval, certification, or device acceptance beyond the documented observation round trip. |
 
 ## Contrast rehearsals
@@ -59,7 +59,7 @@ Open `seeded-assessment-insufficient-data.json` as a disclosed artifact. Show th
 3. Verify the modern fixture is still visible, then continue at **Panel** or **Results**.
 4. If the local fixture itself cannot reload, switch to the open modern JSON artifact and label the remainder **artifact fallback**.
 
-The current iOS control explicitly preserves the bundled fixture when the server is unreachable. That is a fallback for one observation round trip, not evidence that capture, engineering, or cost execution succeeded.
+The current iOS control explicitly preserves the bundled fixture when the server is unreachable. That is a disclosed fallback, not evidence that capture, engineering, or cost execution succeeded during that failed request.
 
 ### Capture failure or unavailable capture
 
@@ -71,11 +71,11 @@ Live capture is not implemented in the current native shell. Do not stage a came
 | --- | --- | --- |
 | What was observed? | In the seed, panel make/visible spaces and route evidence are labeled visual/OCR/measured with confidence and evidence IDs. In the currently integrated path, only one confirmed panel-label observation has a validated server round trip. | Panel fields/observations and `toolRuns` in the modern fixture. |
 | What was user-supplied? | The proposed EVSE wall/location is user-supplied in the modern and constrained seeds. | `proposedEvseLocation.sourceType`. |
-| What was calculated? | The seed includes route estimates and deterministic feasibility/cost outputs with assumptions and tool provenance. These outputs are fixture-backed in this rehearsal, not live API/iPhone calculations. | `measurements`, `engineeringScenarios`, `toolRuns`, and `costScenarios`. |
+| What was calculated? | The local server calculates deterministic feasibility and cost outputs from seeded SiteGraph inputs, with assumptions and tool provenance. | `measurements`, `engineeringScenarios`, `toolRuns`, and `costScenarios`. |
 | What still needs a professional? | True load calculation, breaker/conductor compatibility, service/panel confirmation, routing, and permit/inspection path as applicable. | `finalAssessment.professionalVerificationItems` and unresolved requirements. |
 | What changes for an older or constrained home? | The constrained fixture keeps the lower-current path conditional and rejects a 40 A option as-is; it does not certify capacity. | Constrained fixture scenarios and warnings. |
 | What happens when data is missing? | The system returns `insufficient_data`, names what is missing, and does not invent a recommendation or cost. | Insufficient-data fixture. |
-| What is hidden? | Live capture, Realtime, deterministic-result and cost-tool integration, persistence, multi-fixture selection, one-action reset, and handoff export are not complete. | This document’s availability table and the app’s fixture labels. |
+| What is hidden? | Live capture, Realtime, persistence, multi-fixture selection, updated physical-device acceptance, and handoff export are not complete. | This document’s availability table and the app’s fixture labels. |
 
 ## Rehearsal exit criteria
 

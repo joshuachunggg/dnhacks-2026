@@ -54,9 +54,9 @@
 1. [x] Freeze the SiteGraph and `observation.added` event contracts.
 2. [x] Validate golden fixtures in both TypeScript and Swift.
 3. [x] Wire one seeded observation through phone -> validate -> in-memory state -> render.
-4. [ ] Add the typed form and deterministic calculators.
-5. [ ] Add the report / installer handoff.
-6. [ ] Add fallback paths and rehearse the scripted demo.
+4. [x] Add the typed form and deterministic calculators.
+5. [x] Add the in-app installer handoff view.
+6. [x] Add fixture fallback paths and a scripted rehearsal.
 
 ## Stage gates
 
@@ -110,8 +110,8 @@ Exit when:
 - [x] Swift decodes the canonical fixture.
 - [x] Root app renders the current status and plan.
 - [x] At least one seeded vertical slice is wired end to end through a physical iPhone and local API.
-- [ ] Deterministic load and cost outputs are tested.
-- [ ] Demo fallback path is scripted.
+- [x] Deterministic load and cost outputs are tested through pure contracts, tool endpoints, and a local HTTP sequence.
+- [x] Demo fallback path is scripted.
 
 ## Dependencies
 - Shared contract first, then parallel lane work.

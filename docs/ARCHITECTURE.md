@@ -58,15 +58,15 @@ Minimum entities:
 3. Capture tools produce spatial anchors, observations, and evidence references.
 4. Vision and the realtime agent may propose facts, but validation converts them to typed state.
 5. The agent sees missing data and streams an approved A2UI form or confirmation.
-6. Deterministic tools compute charger, load, route, and cost outputs.
-7. The Next.js API validates assessment creation and `observation.added` events, then returns the updated SiteGraph from in-memory demo storage.
-8. The iPhone renders the returned assessment and installer handoff.
+6. Deterministic tools compute charger feasibility and fixture-scoped cost outputs from validated SiteGraph evidence.
+7. The Next.js API validates assessment creation and `observation.added` events, then runs timestamp-safe engineering and cost tools and returns the updated SiteGraph from in-memory demo storage.
+8. The iPhone renders the returned assessment, tool provenance, cost status, and installer handoff.
 9. Fallback data keeps the narrative alive if live capture fails.
 
 ## Runtime boundaries
-- **Next.js root app**: present demo surface plus the current in-memory assessment API adapter.
-- **`apps/server`**: validated in-memory assessment storage today; future Realtime session, tools, and durable persistence.
-- **`apps/ios`**: fixture decoder and four-screen mobile flow; it can submit one confirmed panel-label observation to a configured demo server and render the validated response.
+- **Next.js root app**: present demo surface plus in-memory assessment, observation, engineering, and cost API adapters.
+- **`apps/server`**: validated in-memory assessment storage and deterministic engineering/cost tools; Realtime and durable persistence remain future work.
+- **`apps/ios`**: fixture decoder and four-screen mobile flow; it creates the bundled fixture assessment, runs engineering then cost against a configured demo server, and renders returned results. The updated flow is simulator-verified.
 - **`packages/schemas`**: shared Zod types and JSON fixtures.
 - **`packages/fixtures`**: golden demo data.
 

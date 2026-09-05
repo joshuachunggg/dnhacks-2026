@@ -21,7 +21,7 @@
 | R-04 | Define SiteGraph v0 and fixture set | Hermes | DONE | `dnhacks-2026` | R-03 | Schema + three fixtures exist |
 | R-05 | Validate fixtures in TypeScript and Swift | Hermes | DONE | `dnhacks-2026` | R-04 | Both checks run successfully |
 | R-06 | Create the first thin vertical slice | Hermes | DONE | `dnhacks-2026` | R-04, R-05 | One seeded observation round-trips through the physical iPhone, validated API, in-memory SiteGraph, and rendered UI |
-| R-07 | Stand up backend and iOS workstreams | Hermes | IN PROGRESS | `dnhacks-2026` | R-04 | iOS seeded demo and local API round-trip are device-accepted; Realtime and deterministic-tool contracts remain |
+| R-07 | Stand up backend and iOS workstreams | Hermes | IN PROGRESS | `dnhacks-2026` | R-04 | Deterministic engineering/cost API-to-iOS flow is simulator-verified; Realtime, capture, and updated physical-device acceptance remain |
 | R-08 | Create and push the initial GitHub commit | Hermes | DONE | `dnhacks-2026` | R-03, R-04, R-05 | Clean commit on `main` and remote push succeeds |
 
 ## Current focus
@@ -38,12 +38,13 @@
 
 ## Next 2 hours
 - [x] Define and test the deterministic engineering tool contract against all three SiteGraph fixtures.
-- TODO: define the separate cost tool contract and render deterministic engineering results through the API/iOS flow.
-- TODO: add the Realtime agent only after the deterministic tool boundary is stable.
+- [x] Define the separate cost tool contract and render deterministic engineering and cost results through the API/iOS flow.
+- TODO: add and exercise the Realtime agent with a configured local API key.
+- TODO: add one real iPhone evidence-backed capture/proposal path, then re-run the end-to-end flow on a physical device.
 
 ## Demo readiness
 - Not ready yet.
-- The seeded phone-to-server vertical slice works; deterministic result generation is the next missing demo capability.
+- The seeded deterministic API-to-iOS flow is simulator-verified and the server HTTP sequence is verified. Realtime, real capture, and updated physical-device acceptance remain.
 
 ## Handoff template
 - Changed files:
