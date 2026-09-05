@@ -11,7 +11,8 @@
     "smoke": "node scripts/smoke-test.mjs",
     "fixtures:check": "tsx scripts/check-fixtures.ts",
     "swift:check": "swift scripts/check-fixtures.swift",
-    "check": "pnpm lint && pnpm typecheck && pnpm smoke && pnpm fixtures:check && pnpm swift:check"
+    "server:test": "tsx --test apps/server/src/*.test.ts",
+    "check": "pnpm lint && pnpm typecheck && pnpm smoke && pnpm fixtures:check && pnpm swift:check && pnpm server:test"
   },
   "dependencies": {
     "next": "16.3.4",

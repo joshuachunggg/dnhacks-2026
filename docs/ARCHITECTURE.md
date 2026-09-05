@@ -59,13 +59,14 @@ Minimum entities:
 4. Vision and the realtime agent may propose facts, but validation converts them to typed state.
 5. The agent sees missing data and streams an approved A2UI form or confirmation.
 6. Deterministic tools compute charger, load, route, and cost outputs.
-7. The app renders the assessment and installer handoff.
-8. Fallback data keeps the narrative alive if live capture fails.
+7. The Next.js API validates assessment creation and `observation.added` events, then returns the updated SiteGraph from in-memory demo storage.
+8. The iPhone renders the returned assessment and installer handoff.
+9. Fallback data keeps the narrative alive if live capture fails.
 
 ## Runtime boundaries
-- **Next.js root app**: present demo surface and current status.
-- **`apps/server` (scaffold today)**: future Realtime session, tools, persistence, and API validation.
-- **`apps/ios` (seeded demo today)**: fixture decoder and four-screen mobile flow; future capture, anchors, and A2UI renderer.
+- **Next.js root app**: present demo surface plus the current in-memory assessment API adapter.
+- **`apps/server`**: validated in-memory assessment storage today; future Realtime session, tools, and durable persistence.
+- **`apps/ios`**: fixture decoder and four-screen mobile flow; it can submit one confirmed panel-label observation to a configured demo server and render the validated response.
 - **`packages/schemas`**: shared Zod types and JSON fixtures.
 - **`packages/fixtures`**: golden demo data.
 

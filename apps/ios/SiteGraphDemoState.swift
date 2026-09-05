@@ -247,10 +247,17 @@ struct DemoInstallerHandoff: Codable {
 final class SiteGraphDemoViewModel: ObservableObject {
     @Published private(set) var snapshot: SiteGraphDemoSnapshot?
     @Published private(set) var loadError: String?
+    @Published var serverBaseURL: String
+    @Published private(set) var liveStatus = "Fixture mode: no live observation has been submitted."
+    @Published private(set) var liveStatusIsError = false
+    @Published private(set) var isSubmittingObservation = false
 
     private let fixtureName = "modern-200a"
+    private var fixtureData: Data?
+    private var liveAssessmentId: String?
 
     init() {
+        serverBaseURL = ProcessInfo.processInfo.environment["DEMO_SERVER_BASE_URL"] ?? ""
         loadDemoData()
     }
 
@@ -279,26 +286,146 @@ final class SiteGraphDemoViewModel: ObservableObject {
     func resetDemo() {
         snapshot = nil
         loadError = nil
+        fixtureData = nil
+        liveAssessmentId = nil
+        liveStatus = "Fixture cleared. Use demo data to restore the local fallback."
+        liveStatusIsError = false
     }
 
     func loadDemoData() {
         do {
-            snapshot = try Self.loadFixture(named: fixtureName)
+            let data = try Self.loadFixtureData(named: fixtureName)
+            snapshot = try JSONDecoder().decode(SiteGraphDemoSnapshot.self, from: data)
+            fixtureData = data
+            liveAssessmentId = nil
             loadError = nil
+            liveStatus = "Fixture mode: no live observation has been submitted."
+            liveStatusIsError = false
         } catch {
             snapshot = nil
             loadError = error.localizedDescription
+            fixtureData = nil
+            liveAssessmentId = nil
+            liveStatus = "Fixture load failed: \(error.localizedDescription)"
+            liveStatusIsError = true
         }
     }
 
-    private static func loadFixture(named name: String) throws -> SiteGraphDemoSnapshot {
+    func submitConfirmedPanelObservation() async {
+        guard let snapshot, let fixtureData else {
+            setLiveError("Load the bundled fixture before submitting an observation.")
+            return
+        }
+        guard let baseURL = normalizedServerURL else {
+            setLiveError("Enter a reachable server URL before using the live API.")
+            return
+        }
+
+        isSubmittingObservation = true
+        defer { isSubmittingObservation = false }
+
+        do {
+            let assessmentId: String
+            if let liveAssessmentId {
+                assessmentId = liveAssessmentId
+            } else {
+                let created: LiveAssessmentResponse = try await send(
+                    to: baseURL.appendingPathComponent("api/assessments"),
+                    body: fixtureData
+                )
+                assessmentId = created.assessment.assessmentId
+                liveAssessmentId = assessmentId
+            }
+
+            let timestamp = ISO8601DateFormatter().string(from: Date())
+            let event = ObservationAddedEvent(
+                eventId: "event-ios-panel-confirmation-\(UUID().uuidString)",
+                eventName: "observation.added",
+                timestamp: timestamp,
+                producer: "ios-demo",
+                schemaVersion: snapshot.schemaVersion,
+                payload: DemoObservation(
+                    id: "obs-ios-panel-confirmation-\(UUID().uuidString)",
+                    kind: "label_text",
+                    field: "panel_label_confirmation",
+                    value: .string("Panel label confirmed by user"),
+                    unit: nil,
+                    status: .confirmed,
+                    sourceType: .userSupplied,
+                    confidence: 1,
+                    evidenceIds: ["frame-010"],
+                    timestamp: timestamp,
+                    producer: "ios-demo",
+                    assumptions: [],
+                    notes: ["Confirmed during the guided demo."]
+                )
+            )
+            let eventData = try JSONEncoder().encode(event)
+            let updated: LiveAssessmentResponse = try await send(
+                to: baseURL
+                    .appendingPathComponent("api/assessments")
+                    .appendingPathComponent(assessmentId)
+                    .appendingPathComponent("events"),
+                body: eventData
+            )
+            self.snapshot = updated.assessment
+            liveStatus = "Live API confirmed one observation and returned validated SiteGraph state."
+            liveStatusIsError = false
+        } catch {
+            setLiveError("Live API unavailable: \(error.localizedDescription). The bundled fixture remains active.")
+        }
+    }
+
+    private var normalizedServerURL: URL? {
+        let trimmed = serverBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let url = URL(string: trimmed), url.scheme != nil, url.host != nil else {
+            return nil
+        }
+        return url
+    }
+
+    private func send<Response: Decodable>(to url: URL, body: Data) async throws -> Response {
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "HTTP \(httpResponse.statusCode)"
+            throw NSError(domain: "SiteGraphDemo", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: message])
+        }
+        return try JSONDecoder().decode(Response.self, from: data)
+    }
+
+    private func setLiveError(_ message: String) {
+        liveStatus = message
+        liveStatusIsError = true
+    }
+
+    private static func loadFixtureData(named name: String) throws -> Data {
         let bundle = Bundle.main
         guard let url = bundle.url(forResource: name, withExtension: "json") else {
             throw NSError(domain: "SiteGraphDemo", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing bundled fixture \(name).json"])
         }
-        let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(SiteGraphDemoSnapshot.self, from: data)
+        return try Data(contentsOf: url)
     }
+}
+
+private struct ObservationAddedEvent: Encodable {
+    let eventId: String
+    let eventName: String
+    let timestamp: String
+    let producer: String
+    let schemaVersion: String
+    let payload: DemoObservation
+}
+
+private struct LiveAssessmentResponse: Decodable {
+    let assessment: SiteGraphDemoSnapshot
 }
 
 private func humanized(_ rawValue: String) -> String {

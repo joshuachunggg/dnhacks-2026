@@ -51,12 +51,12 @@
 - Production auth, billing, and multi-tenant admin.
 
 ## Critical path
-1. Freeze the SiteGraph and event contracts.
-2. Validate golden fixtures in both TypeScript and Swift.
-3. Wire one observation through capture -> validate -> persist -> render.
-4. Add the typed form and deterministic calculators.
-5. Add the report / installer handoff.
-6. Add fallback paths and rehearse the scripted demo.
+1. [x] Freeze the SiteGraph and `observation.added` event contracts.
+2. [x] Validate golden fixtures in both TypeScript and Swift.
+3. [x] Wire one seeded observation through phone -> validate -> in-memory state -> render.
+4. [ ] Add the typed form and deterministic calculators.
+5. [ ] Add the report / installer handoff.
+6. [ ] Add fallback paths and rehearse the scripted demo.
 
 ## Stage gates
 
@@ -72,6 +72,8 @@ Exit when:
 - one captured or seeded observation reaches validated state,
 - persists,
 - and is rendered back to the user.
+
+**Current result:** complete for the seeded observation path. The assessment persists only for the lifetime of the local server process; durable persistence is deferred.
 
 ### Stage 2 — realtime conversation
 Exit when:
@@ -102,12 +104,12 @@ Exit when:
 - fallback, reset, rehearsal, and judge Q&A are all ready.
 
 ## Acceptance checklist
-- [ ] Canonical SiteGraph v0 exists in TypeScript.
-- [ ] Modern 200 A, constrained 100 A, and insufficient-data fixtures exist.
-- [ ] TypeScript validates the fixtures.
-- [ ] Swift decodes the canonical fixture.
-- [ ] Root app renders the current status and plan.
-- [ ] At least one vertical slice is wired end to end.
+- [x] Canonical SiteGraph v0 exists in TypeScript.
+- [x] Modern 200 A, constrained 100 A, and insufficient-data fixtures exist.
+- [x] TypeScript validates the fixtures.
+- [x] Swift decodes the canonical fixture.
+- [x] Root app renders the current status and plan.
+- [x] At least one seeded vertical slice is wired end to end through a physical iPhone and local API.
 - [ ] Deterministic load and cost outputs are tested.
 - [ ] Demo fallback path is scripted.
 
@@ -141,9 +143,13 @@ Each sprint ends with its listed acceptance check before the next sprint starts.
 - **Dependency:** Sprint 1 fixture boundary and the `observation.added` payload are frozen before lanes parallelize.
 - **Exit:** the agent asks for one missing fact, one observation round-trips on the phone, invalid payloads return a visible validation error, and `pnpm check` passes.
 
+**Progress:** the non-agent portion is complete: the phone submitted one seeded confirmation, invalid payloads are rejected by Zod, and the validated response rendered on the physical device. The remaining Sprint 2 work is the server-owned Realtime conversation that asks for the fact.
+
 ### Sprint 3 — A2UI assessment and deterministic handoff
 
 **Goal:** Produce an explainable preliminary answer rather than a static summary.
+
+**Execution order:** complete the deterministic scenario slice before the remaining Realtime conversation work from Sprint 2. It is the next concrete proof that the validated SiteGraph can produce newly computed engineering results rather than re-render fixture-provided ones.
 
 - **Engineering lane:** implement fixture-driven charger/load and cost scenarios with explicit assumptions.
 - **Server lane:** expose those deterministic tool runs through the typed assessment boundary.

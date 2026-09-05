@@ -87,6 +87,7 @@ private struct PanelScreen: View {
         ScrollView {
             VStack(spacing: 16) {
                 DemoActionCard(viewModel: viewModel)
+                LiveObservationCard(viewModel: viewModel)
 
                 if let snapshot = viewModel.snapshot {
                     DemoCard(title: "Panel", subtitle: "Visible facts and confidence", systemImage: "bolt.circle.fill") {
@@ -110,7 +111,9 @@ private struct PanelScreen: View {
 
                     DemoCard(title: "Panel observations", subtitle: "Provenance from the seed fixture", systemImage: "camera.metering.center.weighted") {
                         VStack(spacing: 10) {
-                            ForEach(snapshot.observations.filter { $0.kind == "panel" }) { observation in
+                            ForEach(snapshot.observations.filter { observation in
+                                observation.kind == "panel" || observation.field == "panel_label_confirmation"
+                            }) { observation in
                                 ObservationRow(observation: observation)
                             }
                         }
@@ -301,6 +304,46 @@ private struct DemoActionCard: View {
             .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color(.secondarySystemBackground)))
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct LiveObservationCard: View {
+    @ObservedObject var viewModel: SiteGraphDemoViewModel
+
+    var body: some View {
+        DemoCard(title: "Live observation round-trip", subtitle: "Validated API boundary", systemImage: "arrow.triangle.2.circlepath") {
+            VStack(alignment: .leading, spacing: 12) {
+                TextField("Server URL, e.g. http://192.168.1.10:3000", text: $viewModel.serverBaseURL)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                    .textFieldStyle(.roundedBorder)
+
+                Text("This confirms one panel-label observation, reloads the validated SiteGraph, and keeps the bundled fixture available if the server is unreachable.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button {
+                    Task {
+                        await viewModel.submitConfirmedPanelObservation()
+                    }
+                } label: {
+                    HStack {
+                        if viewModel.isSubmittingObservation {
+                            ProgressView()
+                        }
+                        Text(viewModel.isSubmittingObservation ? "Submitting…" : "Confirm panel label with live API")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(viewModel.snapshot == nil || viewModel.isSubmittingObservation)
+
+                Text(viewModel.liveStatus)
+                    .font(.caption)
+                    .foregroundStyle(viewModel.liveStatusIsError ? .red : .secondary)
+            }
+        }
     }
 }
 

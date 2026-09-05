@@ -119,6 +119,23 @@
       "timestamp": "2026-09-05T13:00:36-05:00"
     }
   ],
+  "toolRuns": [
+    {
+      "id": "tool-load-screen-200a",
+      "toolName": "runEngineeringScenario",
+      "version": "0.1.0",
+      "inputSummary": "200 A service, visible spare spaces, 32 A and 48 A candidate EVSE loads",
+      "resultStatus": "conditional",
+      "warnings": ["Visible spaces are not a substitute for a load calculation."],
+      "assumptions": ["No major conflicting loads disclosed in the seed data."],
+      "evidenceIds": ["frame-010", "route-modern-200a"],
+      "output": {
+        "recommendedScenario": "32 A hardwired charger",
+        "altScenario": "48 A hardwired charger"
+      },
+      "timestamp": "2026-09-05T13:00:40-05:00"
+    }
+  ],
   "costScenarios": [
     {
       "id": "cost-modern-200a",

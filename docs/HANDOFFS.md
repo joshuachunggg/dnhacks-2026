@@ -1,17 +1,13 @@
 # Handoffs
 
 ## Open handoffs
-- **iOS lane -> device owner**: accept the four-screen modern-200A demo on a physical iPhone.
-  - Need: run `SiteGraphShell` from Xcode and tap Site, Panel, Charger Location, Results, Reset demo, and Use demo data.
-  - Acceptance: all fixture-backed screens render; reset clears state and reload restores it.
+- **Main/orchestrator -> engineering + server lanes**: define deterministic scenario input/output contracts and execute one scenario from SiteGraph state.
+  - Need: typed charger/load and cost inputs, explicit assumptions, and result schemas.
+  - Acceptance: a changed SiteGraph input yields a newly computed result that the iPhone renders with status and warnings.
 
-- **Sprint 2 -> server, realtime, and iOS lanes**: define the `observation.added` boundary, then ship one Realtime-guided observation round-trip.
-  - Need: server-owned OpenAI Agents SDK Realtime session, typed API validation, and an iOS client connection with no long-lived API key.
-  - Acceptance: the agent asks for one fact; the phone submits one observation; the validated result reloads with evidence and status.
-
-- **Main/orchestrator -> future backend lane**: create `apps/server` with typed assessment storage and tool endpoints.
-  - Need: event and tool contracts from `docs/CONTRACTS.md`.
-  - Acceptance: one observation can persist and round-trip through the API.
+- **Sprint 2 -> Realtime + iOS lanes**: add a server-owned Realtime session that asks for one missing fact and submits it through the existing `observation.added` boundary.
+  - Need: no long-lived phone API key and typed agent/tool messages.
+  - Acceptance: the agent asks one question; the phone confirms the result; the existing validated state flow renders it.
 
 - **Main/orchestrator -> research lane**: collect one narrow source-backed jurisdiction card and one cost assumption fixture.
   - Need: source URLs, jurisdiction, effective date, and limitations.
@@ -27,5 +23,8 @@
 - iOS lane scaffold created in `apps/ios` with a scaffold-only SwiftUI state model.
 - iOS lane target created in `apps/ios/SiteGraphShell.xcodeproj`; the `SiteGraphShell` scheme wires the scaffold files into an iOS 17+ app and has been run on a physical iPhone.
 - Backend lane scaffold created in `apps/server` with typed placeholder contracts.
+- First validated observation API created: `POST /api/assessments`, `GET /api/assessments/:id`, and `POST /api/assessments/:id/events` use in-memory state for the demo path.
+- iOS live-round-trip control added: it creates the fixture assessment, submits one confirmed panel-label observation, reloads the response, and retains the local fixture on error.
+- Physical iPhone acceptance completed: the phone reached the local API, submitted the observation, and rendered the validated response.
 - Demo lane scaffold created in `demo/` with seeded assessment assets and reset notes.
 - Research lane source card added in `research/` with Austin / Austin Energy cost anchors.

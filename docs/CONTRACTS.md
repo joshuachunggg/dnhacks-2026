@@ -21,6 +21,7 @@ Primary source lives in `packages/schemas/src/sitegraph.ts` and exports:
 - `SiteGraphSchema`
 - `SiteGraphV0`
 - `ObservationSchema`
+- `ObservationAddedEventSchema`
 - `MeasurementSchema`
 - `ToolRunSchema`
 - `CostScenarioSchema`
@@ -64,11 +65,13 @@ Each tool must return:
 - `ok: false` with `insufficient_data` / `validation_error` / `not_supported` / `needs_user_confirmation`.
 
 ## API boundary
-The first server boundary should accept and return only validated JSON:
+The current first server boundary accepts and returns only validated JSON:
 - `POST /api/assessments`
 - `GET /api/assessments/:id`
 - `POST /api/assessments/:id/events`
 - `POST /api/assessments/:id/tools/:toolName`
+
+`POST /api/assessments/:id/events` currently accepts only `ObservationAddedEventSchema` (`eventName: "observation.added"`). It validates before appending the observation and returns `400 validation_error` for malformed input or `404 assessment_not_found` for an unknown assessment.
 
 ## Versioning
 - `sitegraphVersion: 0.1.0`

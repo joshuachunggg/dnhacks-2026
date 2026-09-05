@@ -27,5 +27,8 @@ Thumbs.db
 .vscode/
 *.swp
 
+# Xcode user-specific workspace state
+xcuserdata/
+
 # Local worktrees
 .worktrees/

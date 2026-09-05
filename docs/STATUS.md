@@ -4,7 +4,8 @@
 - `main` includes the native iOS target and `origin` is configured.
 - Current app shell is still the default Next.js scaffold, but the repo docs now reflect the real DNHacks thesis.
 - Shared contract work is moving to SiteGraph v0 plus golden fixtures.
-- The iOS shell is an iOS 17+ SwiftUI target; its original scaffold was run on a physical iPhone and the current four-screen seeded demo compiles for device. Backend implementation is still pending.
+- The iOS shell is an iOS 17+ SwiftUI target with a four-screen seeded demo. A physical iPhone has submitted and rendered one validated observation through the local backend API.
+- The backend currently provides an in-memory validated state boundary; Realtime, deterministic tools, and durable persistence remain pending.
 
 ## Completed
 - Inspected Git state, branch, remote, and toolchain availability.
@@ -20,20 +21,24 @@
 - Scaffolded the backend lane with a typed placeholder manifest and draft envelope.
 - Scaffolded the demo lane with seeded fallback assets and reset notes.
 - Added the Austin/Austin Energy source card and cost anchor notes in `research/`.
+- Fixed the pnpm workspace build-approval placeholder so `pnpm check` can run.
+- Added a Zod-validated, in-memory assessment API: create, get, and append one `observation.added` event.
+- Added the iOS live-round-trip control with a configurable server URL, explicit failure state, and fixture fallback preservation.
+- Aligned the bundled iOS modern-200A fixture with the canonical schema and added a regression test for that boundary.
 - Pushed commit `2f9811c` to `origin/main`.
 
 ## Current work
-- Get physical-device acceptance for the current seeded demo.
-- Sprint 2: build the live agent plus first observation round-trip through a typed backend API.
+- Implement deterministic engineering and cost tool runs against the validated SiteGraph inputs.
+- Then add the Realtime agent on top of the validated observation boundary.
 
 ## Blockers
-- The repo still needs the guided iPhone workflow, live agent, backend service, and one end-to-end observation path.
+- The repo still needs deterministic tool execution, the live agent, and durable backend persistence.
 - Simulator services are unavailable to this terminal environment; physical-device deployment is verified instead.
 - Jurisdiction and cost data are still fixture-backed only.
 
 ## Next integration point
-- The first vertical slice should send one observation through the validated state boundary and render it back in the iOS UI.
+- Run one deterministic engineering scenario from the validated SiteGraph and render its newly computed result on the iPhone.
 
 ## Demo readiness
 - Status: not ready yet
-- Reason: the native shell runs, but capture, realtime intelligence, validated server round-trip, deterministic results, and installer handoff are not yet connected.
+- Reason: the validated phone-to-server observation path works, but capture, realtime intelligence, deterministic results, durable persistence, and an exportable installer handoff are not yet end-to-end verified.

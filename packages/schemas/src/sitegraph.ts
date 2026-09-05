@@ -47,6 +47,15 @@ export const ObservationSchema = z.object({
   supersedes: z.string().optional(),
 }).strict();
 
+export const ObservationAddedEventSchema = z.object({
+  eventId: z.string(),
+  eventName: z.literal('observation.added'),
+  timestamp: z.string(),
+  producer: z.string(),
+  schemaVersion: z.literal(SiteGraphVersion),
+  payload: ObservationSchema,
+}).strict();
+
 export const MeasurementSchema = z.object({
   id: z.string(),
   kind: z.enum(['route_length', 'height', 'distance', 'other']),
@@ -188,6 +197,7 @@ export const SiteGraphSchema = z.object({
 
 export type SiteGraphV0 = z.infer<typeof SiteGraphSchema>;
 export type Observation = z.infer<typeof ObservationSchema>;
+export type ObservationAddedEvent = z.infer<typeof ObservationAddedEventSchema>;
 export type Measurement = z.infer<typeof MeasurementSchema>;
 export type ToolRun = z.infer<typeof ToolRunSchema>;
 export type CostScenario = z.infer<typeof CostScenarioSchema>;
