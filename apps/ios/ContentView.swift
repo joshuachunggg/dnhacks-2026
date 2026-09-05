@@ -321,7 +321,7 @@ private struct EngineeringIntentCard: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
     var body: some View {
-        DemoCard(title: "Vehicle and charging intent", subtitle: "Saved locally; engineering is requested from the server", systemImage: "car.fill") {
+        DemoCard(title: "Vehicle and charging intent", subtitle: "Saved locally and restored on reset; not sent to the current server calculator", systemImage: "car.fill") {
             VStack(alignment: .leading, spacing: 12) {
                 TextField("Vehicle (optional), e.g. 2025 EV", text: $viewModel.vehicleIntent)
                     .textInputAutocapitalization(.words)
@@ -343,7 +343,7 @@ private struct EngineeringIntentCard: View {
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: viewModel.serverBaseURL) { _, _ in viewModel.saveEngineeringIntent() }
 
-                Text("This app submits only {} to runEngineeringScenario. It does not calculate service, breaker, conductor, or load values locally.")
+                Text("The bundled fixture is posted to create the server assessment before {} requests runEngineeringScenario. Vehicle and charging intent remains local; no electrical calculation runs on this device.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 

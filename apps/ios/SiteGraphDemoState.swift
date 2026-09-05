@@ -325,7 +325,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
     }
 
     func runEngineeringScenario() async {
-        guard let snapshot else {
+        guard snapshot != nil, let fixtureData else {
             setEngineeringError("The seeded assessment must load before a server tool run can be requested.")
             return
         }
@@ -339,13 +339,17 @@ final class SiteGraphDemoViewModel: ObservableObject {
         defer { isRunningEngineeringScenario = false }
 
         do {
+            let created: LiveAssessmentResponse = try await send(
+                EngineeringRequestBuilder.createAssessmentRequest(
+                    baseURL: baseURL,
+                    fixtureData: fixtureData
+                )
+            )
             let response: LiveAssessmentResponse = try await send(
-                to: baseURL
-                    .appendingPathComponent("api/assessments")
-                    .appendingPathComponent(snapshot.assessmentId)
-                    .appendingPathComponent("tools")
-                    .appendingPathComponent("runEngineeringScenario"),
-                body: Data("{}".utf8)
+                EngineeringRequestBuilder.engineeringToolRunRequest(
+                    baseURL: baseURL,
+                    assessmentId: created.assessment.assessmentId
+                )
             )
             self.snapshot = response.assessment
             isUsingFixtureFallback = false
@@ -381,12 +385,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
         return url
     }
 
-    private func send<Response: Decodable>(to url: URL, body: Data) async throws -> Response {
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = body
-
+    private func send<Response: Decodable>(_ request: URLRequest) async throws -> Response {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
