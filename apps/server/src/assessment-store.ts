@@ -3,6 +3,10 @@ import {
   SiteGraphSchema,
 } from '../../../packages/schemas/src/sitegraph';
 import type { SiteGraphV0 } from '../../../packages/schemas/src/sitegraph';
+import {
+  applyEngineeringScenario as applyCanonicalEngineeringScenario,
+  type EngineeringScenarioResult,
+} from './engineering-calculator';
 
 export class AssessmentNotFoundError extends Error {
   constructor(assessmentId: string) {
@@ -15,6 +19,7 @@ export interface InMemoryAssessmentStore {
   create(input: unknown): SiteGraphV0;
   get(assessmentId: string): SiteGraphV0 | undefined;
   appendObservationEvent(assessmentId: string, input: unknown): SiteGraphV0;
+  applyEngineeringScenario(assessmentId: string, result: EngineeringScenarioResult): SiteGraphV0;
 }
 
 export function createInMemoryAssessmentStore(): InMemoryAssessmentStore {
@@ -42,6 +47,17 @@ export function createInMemoryAssessmentStore(): InMemoryAssessmentStore {
         ...current,
         observations: [...current.observations, event.payload],
       });
+      assessments.set(assessmentId, updated);
+      return updated;
+    },
+
+    applyEngineeringScenario(assessmentId: string, result: EngineeringScenarioResult): SiteGraphV0 {
+      const current = assessments.get(assessmentId);
+      if (!current) {
+        throw new AssessmentNotFoundError(assessmentId);
+      }
+
+      const updated = applyCanonicalEngineeringScenario(current, result);
       assessments.set(assessmentId, updated);
       return updated;
     },
