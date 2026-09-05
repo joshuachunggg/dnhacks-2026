@@ -2,6 +2,10 @@
 
 ## Open handoffs
 
+- **Main/orchestrator -> spatial contract, artifact, iOS capture, and guided UX lanes**: implement the reviewed one-room RoomPlan capture path described in [`SPATIAL-CAPTURE.md`](./SPATIAL-CAPTURE.md).
+  - Need: a single contract owner first for manifests, artifact references, typed capture events, and error states; consumers must start only after that base is reviewed and reachable.
+  - Acceptance: a physical iPhone captures one room, retains RoomPlan JSON/USDZ and panel-image references, confirms a spatial EVSE location and route measurement, then reaches the existing engineering/cost/handoff flow or a visibly labeled fixture fallback.
+
 - **Sprint 2 -> Realtime + iOS lanes**: add a server-owned Realtime session that asks for one missing fact and submits it through the existing `observation.added` boundary.
   - Need: no long-lived phone API key and typed agent/tool messages.
   - Acceptance: the agent asks one question; the phone confirms the result; the existing validated state flow renders it.

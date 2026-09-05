@@ -25,7 +25,7 @@ export const SourceTypeSchema = z.enum([
 
 export const EvidenceRefSchema = z.object({
   id: z.string(),
-  type: z.enum(['image_frame', 'measurement', 'source_url', 'note']),
+  type: z.enum(['image_frame', 'measurement', 'room_model', 'source_url', 'note']),
   label: z.string(),
   uri: z.string().optional(),
 }).strict();
@@ -70,6 +70,71 @@ export const MeasurementSchema = z.object({
   assumptions: z.array(z.string()).default([]),
   notes: z.array(z.string()).default([]),
 }).strict();
+
+export const ProposedEvseLocationSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  wall: z.string(),
+  status: ValueStatusSchema,
+  sourceType: SourceTypeSchema,
+  confidence: z.number().min(0).max(1).optional(),
+  evidenceIds: z.array(z.string()),
+  timestamp: z.string(),
+  producer: z.string(),
+  assumptions: z.array(z.string()).default([]),
+  notes: z.array(z.string()).default([]),
+}).strict();
+
+export const SpatialArtifactSchema = z.object({
+  id: z.string(),
+  kind: z.enum(['roomplan_json', 'room_usdz', 'panel_image', 'room_preview']),
+  uri: z.string().url(),
+  contentType: z.string().min(1),
+  byteLength: z.number().int().positive(),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/i, 'Expected a SHA-256 hex digest'),
+}).strict();
+
+export const SpatialCaptureSchema = z.object({
+  id: z.string(),
+  kind: z.enum(['roomplan_room']),
+  status: z.enum(['proposed', 'confirmed']),
+  coordinateSpaceId: z.string().min(1),
+  timestamp: z.string(),
+  producer: z.string(),
+  artifacts: z.array(SpatialArtifactSchema).min(1),
+  evidence: z.array(EvidenceRefSchema).min(1),
+}).strict();
+
+const AssessmentEventBaseSchema = z.object({
+  eventId: z.string(),
+  timestamp: z.string(),
+  producer: z.string(),
+  schemaVersion: z.literal(SiteGraphVersion),
+});
+
+export const SpatialCaptureRecordedEventSchema = AssessmentEventBaseSchema.extend({
+  eventName: z.literal('spatial.capture.recorded'),
+  payload: SpatialCaptureSchema,
+}).strict();
+
+export const MeasurementRecordedEventSchema = AssessmentEventBaseSchema.extend({
+  eventName: z.literal('measurement.recorded'),
+  payload: MeasurementSchema,
+}).strict();
+
+export const EvseLocationConfirmedEventSchema = AssessmentEventBaseSchema.extend({
+  eventName: z.literal('evse_location.confirmed'),
+  payload: ProposedEvseLocationSchema.extend({
+    status: z.literal('confirmed'),
+  }).strict(),
+}).strict();
+
+export const AssessmentEventSchema = z.discriminatedUnion('eventName', [
+  ObservationAddedEventSchema,
+  SpatialCaptureRecordedEventSchema,
+  MeasurementRecordedEventSchema,
+  EvseLocationConfirmedEventSchema,
+]);
 
 export const ToolRunSchema = z.object({
   id: z.string(),
@@ -122,6 +187,7 @@ export const SiteGraphSchema = z.object({
   schemaVersion: z.literal(SiteGraphVersion),
   assessmentId: z.string(),
   evidence: z.array(EvidenceRefSchema).default([]),
+  spatialCaptures: z.array(SpatialCaptureSchema).default([]),
   site: z.object({
     id: z.string(),
     label: z.string(),
@@ -134,19 +200,7 @@ export const SiteGraphSchema = z.object({
     }).strict(),
     utility: z.string().optional(),
   }).strict(),
-  proposedEvseLocation: z.object({
-    id: z.string(),
-    label: z.string(),
-    wall: z.string(),
-    status: ValueStatusSchema,
-    sourceType: SourceTypeSchema,
-    confidence: z.number().min(0).max(1).optional(),
-    evidenceIds: z.array(z.string()),
-    timestamp: z.string(),
-    producer: z.string(),
-    assumptions: z.array(z.string()).default([]),
-    notes: z.array(z.string()).default([]),
-  }).strict(),
+  proposedEvseLocation: ProposedEvseLocationSchema,
   electricalPanel: z.object({
     id: z.string(),
     label: z.string(),
@@ -200,7 +254,10 @@ export type SiteGraphV0 = z.infer<typeof SiteGraphSchema>;
 export type EvidenceRef = z.infer<typeof EvidenceRefSchema>;
 export type Observation = z.infer<typeof ObservationSchema>;
 export type ObservationAddedEvent = z.infer<typeof ObservationAddedEventSchema>;
+export type AssessmentEvent = z.infer<typeof AssessmentEventSchema>;
 export type Measurement = z.infer<typeof MeasurementSchema>;
+export type SpatialArtifact = z.infer<typeof SpatialArtifactSchema>;
+export type SpatialCapture = z.infer<typeof SpatialCaptureSchema>;
 export type ToolRun = z.infer<typeof ToolRunSchema>;
 export type CostScenario = z.infer<typeof CostScenarioSchema>;
 export type AssessmentStatus = z.infer<typeof AssessmentStatusSchema>;

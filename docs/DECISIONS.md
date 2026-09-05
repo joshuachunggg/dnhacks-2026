@@ -161,3 +161,23 @@ Append-only log template:
 - Reason: Registry resolution keeps valid non-fixture evidence extensible while rejecting unknown/replaced references; a trusted apply argument rejects both isolated and coordinated result-timestamp tampering.
 - Consequences: Panel and route facts must resolve all evidence IDs in `graph.evidence`; non-epoch calculator callers must propagate their captured timestamp into the apply boundary.
 - Revisit trigger: A signed evidence/provenance service replaces the in-graph registry or trusted invocation boundary.
+
+### 0016
+- ID: 0016
+- Date: 2026-09-05
+- Status: locked for the first live spatial slice
+- Decision: Capture one relevant room or garage area with RoomPlan, retain its JSON/USDZ artifacts outside SiteGraph, and bind them to confirmed ARKit EVSE-anchor and route evidence through validated artifact manifests.
+- Context: The fixture-based demo has no real spatial capture, 3D artifact, or durable artifact boundary, while the live demo needs reviewable room geometry without treating it as electrical proof.
+- Reason: RoomPlan provides a credible room-scale spatial artifact; ARKit provides placement/measurement context; separating immutable binaries from typed SiteGraph facts keeps API payloads small, calculations reproducible, and provenance explicit.
+- Consequences: The spatial contract must add capture manifests, artifact references, typed location/measurement events, and an artifact-store adapter before capture consumers start. Panel images and RoomPlan geometry remain proposed evidence until the user confirms the corresponding facts. Whole-house/multi-room reconstruction remains deferred.
+- Revisit trigger: The supported device cannot produce a usable one-room capture within the demo time, or artifact upload materially threatens the fallback path.
+
+### 0017
+- ID: 0017
+- Date: 2026-09-05
+- Status: locked for the first RoomPlan implementation
+- Decision: Persist RoomPlan USDZ artifacts locally on the iPhone and submit only their validated metadata manifest to the in-memory assessment API.
+- Context: The first live spatial slice needs a real room model and an agent-compatible typed state boundary, but the backend has no durable object storage or authorized binary-upload mechanism.
+- Reason: This proves the RoomPlan capture-to-contract path within the hackathon window without making false durability or remote-agent-readability claims.
+- Consequences: `local://` artifact references are local-only; the server retains capture metadata, integrity information, and linked evidence but cannot serve model bytes. Durable upload and opaque server-readable references are required before an agent may inspect room geometry remotely.
+- Revisit trigger: A durable artifact provider and server-issued upload/commit contract are configured and physically validated.

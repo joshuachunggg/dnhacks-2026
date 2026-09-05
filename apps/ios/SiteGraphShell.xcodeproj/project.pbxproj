@@ -11,6 +11,9 @@
 		A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* ContentView.swift */; };
 		A10000000000000000000003 /* SiteGraphDemoState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* SiteGraphDemoState.swift */; };
 		A10000000000000000000005 /* EngineeringRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* EngineeringRequest.swift */; };
+		A10000000000000000000006 /* SpatialCaptureRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* SpatialCaptureRequest.swift */; };
+		A10000000000000000000007 /* LocalSpatialArtifactStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* LocalSpatialArtifactStore.swift */; };
+		A10000000000000000000008 /* RoomPlanCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000019 /* RoomPlanCaptureView.swift */; };
 		A10000000000000000000004 /* modern-200a.json in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000015 /* modern-200a.json */; };
 /* End PBXBuildFile section */
 
@@ -19,6 +22,9 @@
 		A10000000000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A10000000000000000000013 /* SiteGraphDemoState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteGraphDemoState.swift; sourceTree = "<group>"; };
 		A10000000000000000000016 /* EngineeringRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineeringRequest.swift; sourceTree = "<group>"; };
+		A10000000000000000000017 /* SpatialCaptureRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpatialCaptureRequest.swift; sourceTree = "<group>"; };
+		A10000000000000000000018 /* LocalSpatialArtifactStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSpatialArtifactStore.swift; sourceTree = "<group>"; };
+		A10000000000000000000019 /* RoomPlanCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanCaptureView.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* SiteGraphShell.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SiteGraphShell.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000015 /* modern-200a.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = modern-200a.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -50,6 +56,9 @@
 				A10000000000000000000012 /* ContentView.swift */,
 				A10000000000000000000013 /* SiteGraphDemoState.swift */,
 				A10000000000000000000016 /* EngineeringRequest.swift */,
+				A10000000000000000000017 /* SpatialCaptureRequest.swift */,
+				A10000000000000000000018 /* LocalSpatialArtifactStore.swift */,
+				A10000000000000000000019 /* RoomPlanCaptureView.swift */,
 			);
 			path = "";
 			sourceTree = "<group>";
@@ -142,6 +151,9 @@
 				A10000000000000000000002 /* ContentView.swift in Sources */,
 				A10000000000000000000003 /* SiteGraphDemoState.swift in Sources */,
 				A10000000000000000000005 /* EngineeringRequest.swift in Sources */,
+				A10000000000000000000006 /* SpatialCaptureRequest.swift in Sources */,
+				A10000000000000000000007 /* LocalSpatialArtifactStore.swift in Sources */,
+				A10000000000000000000008 /* RoomPlanCaptureView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -204,6 +216,7 @@
 				DEVELOPMENT_TEAM = 239WF2VH7J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteGraph;
+				INFOPLIST_KEY_NSCameraUsageDescription = "SiteGraph uses the camera to capture room geometry and panel evidence for a preliminary EV charger assessment.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -230,12 +243,13 @@
 				DEVELOPMENT_TEAM = 239WF2VH7J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteGraph;
+				INFOPLIST_KEY_NSCameraUsageDescription = "SiteGraph uses the camera to capture room geometry and panel evidence for a preliminary EV charger assessment.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
-				);
+					);
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.dnhacks.sitegraphshell;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -40,7 +40,8 @@
 - [x] Define and test the deterministic engineering tool contract against all three SiteGraph fixtures.
 - [x] Define the separate cost tool contract and render deterministic engineering and cost results through the API/iOS flow.
 - TODO: add and exercise the Realtime agent with a configured local API key.
-- TODO: add one real iPhone evidence-backed capture/proposal path, then re-run the end-to-end flow on a physical device.
+- TODO: freeze and review the RoomPlan/ARKit artifact-manifest, typed capture-event, and durable artifact-store contracts in [`SPATIAL-CAPTURE.md`](./SPATIAL-CAPTURE.md).
+- TODO: add one real iPhone RoomPlan/panel/EVSE-anchor capture path, guided review flow, then re-run the end-to-end flow on a physical device.
 
 ## Demo readiness
 - Not ready yet.

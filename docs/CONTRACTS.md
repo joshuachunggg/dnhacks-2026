@@ -25,6 +25,12 @@ Primary source lives in `packages/schemas/src/sitegraph.ts` and exports:
 - `ObservationSchema`
 - `ObservationAddedEventSchema`
 - `MeasurementSchema`
+- `SpatialArtifactSchema`
+- `SpatialCaptureSchema`
+- `SpatialCaptureRecordedEventSchema`
+- `MeasurementRecordedEventSchema`
+- `EvseLocationConfirmedEventSchema`
+- `AssessmentEventSchema`
 - `ToolRunSchema`
 - `CostScenarioSchema`
 - `AssessmentStatusSchema`
@@ -36,7 +42,9 @@ Minimum events:
 - `observation.added`
 - `observation.confirmed`
 - `observation.contradicted`
+- `spatial.capture.recorded`
 - `measurement.recorded`
+- `evse_location.confirmed`
 - `tool.run_requested`
 - `tool.run_completed`
 - `assessment.updated`
@@ -92,7 +100,9 @@ The current first server boundary accepts and returns only validated JSON:
 - `POST /api/assessments/:id/events`
 - `POST /api/assessments/:id/tools/:toolName`
 
-`POST /api/assessments/:id/events` currently accepts only `ObservationAddedEventSchema` (`eventName: "observation.added"`). It validates before appending the observation and returns `400 validation_error` for malformed input or `404 assessment_not_found` for an unknown assessment.
+`POST /api/assessments/:id/events` accepts the validated `AssessmentEventSchema` union: `observation.added`, `spatial.capture.recorded`, `measurement.recorded`, and `evse_location.confirmed`. A spatial capture stores typed metadata only: capture identity, coordinate-space ID, producer/version, and immutable artifact descriptors (kind, content type, byte length, SHA-256, and URI). It never accepts a binary artifact body. The server appends evidence references from the manifest, replaces spatial captures by stable ID, replaces measurements by stable ID, and replaces the proposed EVSE location only through the explicit confirmation event. It returns `400 validation_error` for malformed input or `404 assessment_not_found` for an unknown assessment.
+
+This boundary is the future agent-tool read/write surface: agent tools must fetch the validated assessment and may submit only the same event union. Agent code cannot dereference a device-local artifact URI; a future durable artifact adapter must resolve an opaque server-issued artifact reference before such bytes become tool-readable.
 
 ## Versioning
 - `sitegraphVersion: 0.1.0`

@@ -19,7 +19,7 @@ export async function POST(request: Request, context: AssessmentRouteContext): P
 
   const { assessmentId } = await context.params;
   try {
-    const assessment = assessmentStore.appendObservationEvent(assessmentId, input);
+    const assessment = assessmentStore.appendEvent(assessmentId, input);
     return Response.json({ assessment });
   } catch (error) {
     if (error instanceof AssessmentNotFoundError) {

@@ -310,9 +310,11 @@ final class SiteGraphDemoViewModel: ObservableObject {
     @Published private(set) var engineeringStatusIsError = false
     @Published private(set) var isRunningEngineeringScenario = false
     @Published private(set) var isUsingFixtureFallback = true
+    @Published private(set) var spatialCaptureStatus = "Capture a room to add spatial metadata to the live assessment."
 
     private let fixtureName = "modern-200a"
     private var fixtureData: Data?
+    private var liveAssessmentId: String?
     private let defaults: UserDefaults
     private enum PreferenceKey {
         static let serverBaseURL = "engineering.serverBaseURL"
@@ -345,6 +347,8 @@ final class SiteGraphDemoViewModel: ObservableObject {
         defaults.removeObject(forKey: PreferenceKey.chargingIntent)
         vehicleIntent = ""
         chargingIntent = "Hardwired home charging"
+        liveAssessmentId = nil
+        spatialCaptureStatus = "Capture a room to add spatial metadata to the live assessment."
         loadSeededAssessment()
     }
 
@@ -355,6 +359,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
             fixtureData = data
             loadError = nil
             isUsingFixtureFallback = true
+            liveAssessmentId = nil
             engineeringStatus = "Fixture fallback active. The bundled seeded assessment is shown until a server tool run succeeds."
             engineeringStatusIsError = false
         } catch {
@@ -382,16 +387,11 @@ final class SiteGraphDemoViewModel: ObservableObject {
         defer { isRunningEngineeringScenario = false }
 
         do {
-            let created: LiveAssessmentResponse = try await send(
-                EngineeringRequestBuilder.createAssessmentRequest(
-                    baseURL: baseURL,
-                    fixtureData: fixtureData
-                )
-            )
+            let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
             let response: LiveAssessmentResponse = try await send(
                 EngineeringRequestBuilder.engineeringToolRunRequest(
                     baseURL: baseURL,
-                    assessmentId: created.assessment.assessmentId
+                    assessmentId: assessmentId
                 )
             )
             let costResponse: LiveAssessmentResponse = try await send(
@@ -407,6 +407,54 @@ final class SiteGraphDemoViewModel: ObservableObject {
         } catch {
             restoreFixtureFallback(after: error)
         }
+    }
+
+    func recordSpatialCapture(_ payload: SpatialCapturePayload) async {
+        guard let fixtureData else {
+            spatialCaptureStatus = "The seeded assessment must load before spatial metadata can be recorded."
+            return
+        }
+        guard let baseURL = normalizedServerURL else {
+            spatialCaptureStatus = "Room model saved locally. Enter a reachable server URL to record its metadata."
+            return
+        }
+
+        do {
+            let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
+            let event = SpatialCaptureEvent(
+                eventId: "event-\(UUID().uuidString.lowercased())",
+                eventName: .captureRecorded,
+                timestamp: payload.timestamp,
+                producer: "ios-roomplan",
+                payload: payload
+            )
+            let response: LiveAssessmentResponse = try await send(
+                SpatialCaptureRequestBuilder.eventRequest(
+                    baseURL: baseURL,
+                    assessmentId: assessmentId,
+                    event: event
+                )
+            )
+            snapshot = response.assessment
+            isUsingFixtureFallback = false
+            spatialCaptureStatus = "Spatial metadata recorded on the server. The USDZ remains local to this device."
+        } catch {
+            spatialCaptureStatus = "Room model saved locally; server metadata recording failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func ensureLiveAssessment(baseURL: URL, fixtureData: Data) async throws -> String {
+        if let liveAssessmentId {
+            return liveAssessmentId
+        }
+        let created: LiveAssessmentResponse = try await send(
+            EngineeringRequestBuilder.createAssessmentRequest(
+                baseURL: baseURL,
+                fixtureData: fixtureData
+            )
+        )
+        liveAssessmentId = created.assessment.assessmentId
+        return created.assessment.assessmentId
     }
 
     private func restoreFixtureFallback(after error: Error) {

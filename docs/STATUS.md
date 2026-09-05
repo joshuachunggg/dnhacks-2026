@@ -31,12 +31,15 @@
 - Added a backward-compatible SiteGraph evidence registry and fixture records; deterministic engineering and cost calculations now require their panel/route evidence IDs to resolve in that registry.
 - Added timestamp-safe engineering and cost endpoints. Each captures one request-time timestamp, passes it to calculation and application, persists atomically in the in-memory store, and rejects malformed tool bodies.
 - Added native server-result rendering for engineering and cost, including provenance, requirements, handoff, disclaimer, `preliminary_range`, `partial_range`, and `insufficient_data` presentation.
+- Added the first spatial vertical slice: native one-room RoomPlan capture, local USDZ export to app-support storage, SHA-256/byte-count artifact descriptors, and a visible local-only capture card.
+- Added typed spatial capture, measurement, and EVSE-confirmation events. The in-memory API validates and persists metadata manifests and associated evidence; it intentionally does not accept binary artifact data.
+- Added request/persistence regression checks and a full API test for RoomPlan manifest plus confirmed spatial facts.
 - Verified the local HTTP acceptance sequence: create modern fixture → run engineering → run cost. The response contained canonical conditional engineering and cost ToolRuns and the fixture-scoped expected cost of $1,541.99.
 - Pushed commit `2f9811c` to `origin/main`.
 
 ## Current work
 - Add the server-owned Realtime conversation that asks for one missing fact through the validated observation boundary. This requires an `OPENAI_API_KEY` in local `.env.local` before the live path can be exercised.
-- Add one real, evidence-backed iPhone capture/proposal path or retain the disclosed fixture fallback when capture is unavailable; validate the merged tool-rendering flow on a physical device when it is online.
+- Validate the implemented RoomPlan scan/export/metadata-post path on a physical device. Then add ARKit EVSE anchor/route capture, panel-image evidence, durable artifact uploads, and the guided capture-to-results UX described in [`SPATIAL-CAPTURE.md`](./SPATIAL-CAPTURE.md).
 
 ## Blockers
 - No local `.env.local` / `OPENAI_API_KEY` is configured, so a live Realtime session cannot be exercised.
@@ -45,9 +48,9 @@
 - Jurisdiction data and non-government cost allowances are intentionally demo/fixture-scoped; live quotes and jurisdiction expansion remain out of scope.
 
 ## Next integration point
-- Implement and exercise the one-question server-owned Realtime path, with explicit fixture fallback if credentials or connectivity are unavailable.
+- Use the implemented spatial event contract as the integration base; parallelize ARKit route capture, panel capture, durable artifact upload, guided UX, Realtime, and QA consumers without changing the frozen capture-manifest event.
 
 ## Demo readiness
 - Status: partially ready
 - Working: seeded assessment → validated local API → deterministic engineering and cost → native server-result rendering, plus a scripted fixture fallback. The local HTTP path and simulator build are verified.
-- Not ready to claim: live Realtime conversation, real capture/vision evidence, updated physical-device acceptance, durable persistence, or handoff export.
+- Not ready to claim: ARKit route capture, panel/vision evidence, updated physical-device RoomPlan acceptance, durable artifact persistence, Realtime conversation, or handoff export.

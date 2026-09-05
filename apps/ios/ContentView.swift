@@ -135,6 +135,7 @@ private struct ChargerLocationScreen: View {
         AssessmentScrollContainer {
             VStack(spacing: 16) {
                 DemoActionCard(viewModel: viewModel)
+                RoomPlanCaptureCard(viewModel: viewModel)
 
                 if let snapshot = viewModel.snapshot {
                     DemoCard(title: "Charger location", subtitle: "Proposed EVSE mount point", systemImage: "location.fill") {

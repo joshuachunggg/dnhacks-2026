@@ -1,6 +1,7 @@
 {
   "schemaVersion": "0.1.0",
   "assessmentId": "assessment-constrained-100a",
+  "spatialCaptures": [],
   "site": {
     "id": "site-constrained-100a",
     "label": "Constrained 100 A older home",

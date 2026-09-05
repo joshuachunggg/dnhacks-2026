@@ -34,7 +34,7 @@
 - Fixture-backed fallback if live capture, OCR, voice, or network fails.
 
 ### P1 — highly desirable
-- Better spatial visualization and route tracing.
+- Better spatial visualization and route tracing beyond the first captured-room preview.
 - User confirmation / contradiction workflow for OCR.
 - One source-backed demo-jurisdiction permit card.
 - Load-managed option for constrained service.
@@ -44,7 +44,7 @@
 
 ### P2 — only after P0/P1 are stable
 - Utility account / Green Button integration.
-- Full-house RoomPlan scan.
+- Full-house or multi-room RoomPlan reconstruction.
 - Multiple specialist agents.
 - Broad code scraping and nationwide support.
 - Contractor marketplace and bidding.
@@ -83,9 +83,10 @@ Exit when:
 
 ### Stage 3 — spatial capture and perception
 Exit when:
+- one relevant room/garage area is captured with RoomPlan and retains validated JSON/USDZ artifact references,
 - charger target anchoring,
 - panel capture,
-- and at least one spatial measurement are real and typed.
+- and at least one spatial measurement are real, typed, evidence-linked, and user-confirmed.
 
 ### Stage 4 — engineering and cost tools
 Exit when:
@@ -159,16 +160,19 @@ Each sprint ends with its listed acceptance check before the next sprint starts.
 
 ### Sprint 4 — spatial + vision capture and rehearsal
 
-**Goal:** Replace one seeded input with real phone evidence while preserving the fallback demo path.
+**Goal:** Replace one seeded input with real phone evidence while preserving the fallback demo path and retaining a reviewable one-room 3D artifact.
 
-- **iOS capture lane:** capture a panel photo, record a proposed charger location with ARKit/LiDAR anchoring, and send selected visual evidence for proposed observations.
+- **Contract lane:** freeze spatial-capture manifests, artifact references, location/measurement events, upload commit payloads, and error/fallback states before consumer work begins. See [`SPATIAL-CAPTURE.md`](./SPATIAL-CAPTURE.md).
+- **Artifact/server lane:** persist RoomPlan JSON/USDZ and panel-image artifacts in a configured durable object store; SiteGraph stores validated references rather than binary data.
+- **iOS capture lane:** capture one RoomPlan room/garage scan, export local JSON/USDZ, capture a panel photo, record a proposed charger location with ARKit/LiDAR anchoring, and send selected visual evidence for proposed observations.
 - **Vision lane:** turn the selected frame into a reviewable proposed panel observation; use A2UI confirmation before it enters authoritative state.
+- **Guided UX lane:** replace the equal-weight data tabs with assessment home → capture space → capture panel → choose charger location → review/results, with an always-visible live/fixture/fallback label and details disclosure for raw provenance.
 - **Demo / research lane:** wire the disclosed fixture fallback, reset path, and judge rehearsal script.
 - **Integration lane:** attach capture output to Sprint 2's observation interface.
-- **Dependency:** no capture lane changes the validated observation contract without coordinating with its owner.
-- **Exit:** the phone can add one real evidence-backed observation or explicitly switch to the fixture fallback, then complete the same results and handoff flow.
+- **Dependency:** no capture lane changes the validated spatial contract without coordinating with its owner; all consumer work starts only from the reviewed contract base.
+- **Exit:** on a physical iPhone, the phone can retain one-room RoomPlan artifacts, add one real evidence-backed observation, confirm a spatial EVSE location and route measurement, then complete the same results and handoff flow or explicitly switch to the fixture fallback.
 
 ### Deliberately deferred
 
-- Full RoomPlan scans, production persistence/auth, and multi-agent orchestration.
-- Better spatial visualization only after the capture-to-result path works.
+- Full-house/multi-room RoomPlan scans, production persistence/auth, and multi-agent orchestration.
+- Spatial visualization beyond the first captured-room preview until the capture-to-result path works.

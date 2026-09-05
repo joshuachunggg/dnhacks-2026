@@ -1,6 +1,7 @@
 {
   "schemaVersion": "0.1.0",
   "assessmentId": "assessment-insufficient-data",
+  "spatialCaptures": [],
   "evidence": [],
   "site": {
     "id": "site-insufficient-data",
