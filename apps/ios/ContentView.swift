@@ -87,7 +87,7 @@ private struct PanelScreen: View {
         ScrollView {
             VStack(spacing: 16) {
                 DemoActionCard(viewModel: viewModel)
-                LiveObservationCard(viewModel: viewModel)
+                EngineeringIntentCard(viewModel: viewModel)
 
                 if let snapshot = viewModel.snapshot {
                     DemoCard(title: "Panel", subtitle: "Visible facts and confidence", systemImage: "bolt.circle.fill") {
@@ -207,7 +207,17 @@ private struct ResultsScreen: View {
                         .font(.subheadline)
                     }
 
-                    DemoCard(title: "Engineering scenarios", subtitle: "The app surfaces more than one answer", systemImage: "slider.horizontal.3") {
+                    EngineeringRunStatusCard(viewModel: viewModel)
+
+                    DemoCard(title: "Tool run provenance", subtitle: "Returned by the deterministic engineering tool", systemImage: "wrench.and.screwdriver.fill") {
+                        VStack(spacing: 12) {
+                            ForEach(snapshot.toolRuns) { toolRun in
+                                ToolRunRow(toolRun: toolRun)
+                            }
+                        }
+                    }
+
+                    DemoCard(title: "Engineering scenarios", subtitle: "Server-returned scenarios; no electrical calculation runs on this device", systemImage: "slider.horizontal.3") {
                         VStack(spacing: 12) {
                             ForEach(snapshot.engineeringScenarios) { scenario in
                                 VStack(alignment: .leading, spacing: 6) {
@@ -280,9 +290,9 @@ private struct DemoActionCard: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
     var body: some View {
-        Button(action: viewModel.toggleDemoData) {
+        Button(action: viewModel.resetToSeededAssessment) {
             HStack(alignment: .center, spacing: 12) {
-                Image(systemName: viewModel.snapshot == nil ? "sparkles" : "arrow.clockwise")
+                Image(systemName: "arrow.counterclockwise")
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.indigo)
                     .frame(width: 32, height: 32)
@@ -307,43 +317,101 @@ private struct DemoActionCard: View {
     }
 }
 
-private struct LiveObservationCard: View {
+private struct EngineeringIntentCard: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
     var body: some View {
-        DemoCard(title: "Live observation round-trip", subtitle: "Validated API boundary", systemImage: "arrow.triangle.2.circlepath") {
+        DemoCard(title: "Vehicle and charging intent", subtitle: "Saved locally and restored on reset; not sent to the current server calculator", systemImage: "car.fill") {
             VStack(alignment: .leading, spacing: 12) {
+                TextField("Vehicle (optional), e.g. 2025 EV", text: $viewModel.vehicleIntent)
+                    .textInputAutocapitalization(.words)
+                    .textFieldStyle(.roundedBorder)
+                    .onChange(of: viewModel.vehicleIntent) { _, _ in viewModel.saveEngineeringIntent() }
+
+                Picker("Charging intent", selection: $viewModel.chargingIntent) {
+                    Text("Hardwired home charging").tag("Hardwired home charging")
+                    Text("Plug-in home charging").tag("Plug-in home charging")
+                    Text("I need installer guidance").tag("I need installer guidance")
+                }
+                .pickerStyle(.menu)
+                .onChange(of: viewModel.chargingIntent) { _, _ in viewModel.saveEngineeringIntent() }
+
                 TextField("Server URL, e.g. http://192.168.1.10:3000", text: $viewModel.serverBaseURL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.URL)
                     .textFieldStyle(.roundedBorder)
+                    .onChange(of: viewModel.serverBaseURL) { _, _ in viewModel.saveEngineeringIntent() }
 
-                Text("This confirms one panel-label observation, reloads the validated SiteGraph, and keeps the bundled fixture available if the server is unreachable.")
+                Text("The bundled fixture is posted to create the server assessment before {} requests runEngineeringScenario. Vehicle and charging intent remains local; no electrical calculation runs on this device.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 Button {
-                    Task {
-                        await viewModel.submitConfirmedPanelObservation()
-                    }
+                    Task { await viewModel.runEngineeringScenario() }
                 } label: {
                     HStack {
-                        if viewModel.isSubmittingObservation {
-                            ProgressView()
-                        }
-                        Text(viewModel.isSubmittingObservation ? "Submitting…" : "Confirm panel label with live API")
+                        if viewModel.isRunningEngineeringScenario { ProgressView() }
+                        Text(viewModel.isRunningEngineeringScenario ? "Requesting server result…" : "Run deterministic engineering scenario")
                     }
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(viewModel.snapshot == nil || viewModel.isSubmittingObservation)
-
-                Text(viewModel.liveStatus)
-                    .font(.caption)
-                    .foregroundStyle(viewModel.liveStatusIsError ? .red : .secondary)
+                .disabled(viewModel.snapshot == nil || viewModel.isRunningEngineeringScenario)
             }
         }
+    }
+}
+
+private struct EngineeringRunStatusCard: View {
+    @ObservedObject var viewModel: SiteGraphDemoViewModel
+
+    var body: some View {
+        DemoCard(
+            title: viewModel.isUsingFixtureFallback ? "Fixture fallback active" : "Server assessment active",
+            subtitle: "Assessment source",
+            systemImage: viewModel.isUsingFixtureFallback ? "exclamationmark.triangle.fill" : "checkmark.icloud.fill"
+        ) {
+            Text(viewModel.engineeringStatus)
+                .font(.subheadline)
+                .foregroundStyle(viewModel.engineeringStatusIsError ? .red : .primary)
+        }
+    }
+}
+
+private struct ToolRunRow: View {
+    let toolRun: DemoToolRun
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(toolRun.toolName)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                ScenarioBadge(text: toolRun.resultStatus)
+            }
+            Text("Version \(toolRun.version) · \(toolRun.timestamp)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(toolRun.inputSummary)
+                .font(.footnote)
+            Text("Evidence: \(evidenceList(toolRun.evidenceIds))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if !toolRun.assumptions.isEmpty {
+                Text("Assumptions: \(toolRun.assumptions.joined(separator: " "))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if !toolRun.warnings.isEmpty {
+                Text("Warnings: \(toolRun.warnings.joined(separator: " "))")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(.tertiarySystemBackground)))
     }
 }
 

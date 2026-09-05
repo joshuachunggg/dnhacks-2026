@@ -50,6 +50,7 @@ struct SiteGraphDemoSnapshot: Codable {
     let measurements: [DemoMeasurement]
     let observations: [DemoObservation]
     let engineeringScenarios: [DemoEngineeringScenario]
+    let toolRuns: [DemoToolRun]
     let costScenarios: [DemoCostScenario]
     let finalAssessment: DemoFinalAssessment
 
@@ -202,6 +203,18 @@ struct DemoEngineeringScenario: Codable, Identifiable {
     let timestamp: String
 }
 
+struct DemoToolRun: Codable, Identifiable {
+    let id: String
+    let toolName: String
+    let version: String
+    let inputSummary: String
+    let resultStatus: String
+    let warnings: [String]
+    let assumptions: [String]
+    let evidenceIds: [String]
+    let timestamp: String
+}
+
 struct DemoCostScenario: Codable, Identifiable {
     let id: String
     let label: String
@@ -248,131 +261,119 @@ final class SiteGraphDemoViewModel: ObservableObject {
     @Published private(set) var snapshot: SiteGraphDemoSnapshot?
     @Published private(set) var loadError: String?
     @Published var serverBaseURL: String
-    @Published private(set) var liveStatus = "Fixture mode: no live observation has been submitted."
-    @Published private(set) var liveStatusIsError = false
-    @Published private(set) var isSubmittingObservation = false
+    @Published var vehicleIntent: String
+    @Published var chargingIntent: String
+    @Published private(set) var engineeringStatus = "Fixture fallback active. Connect a server to run the deterministic assessment."
+    @Published private(set) var engineeringStatusIsError = false
+    @Published private(set) var isRunningEngineeringScenario = false
+    @Published private(set) var isUsingFixtureFallback = true
 
     private let fixtureName = "modern-200a"
     private var fixtureData: Data?
-    private var liveAssessmentId: String?
-
-    init() {
-        serverBaseURL = ProcessInfo.processInfo.environment["DEMO_SERVER_BASE_URL"] ?? ""
-        loadDemoData()
+    private let defaults: UserDefaults
+    private enum PreferenceKey {
+        static let serverBaseURL = "engineering.serverBaseURL"
+        static let vehicleIntent = "engineering.vehicleIntent"
+        static let chargingIntent = "engineering.chargingIntent"
     }
 
-    var actionTitle: String {
-        snapshot == nil ? "Use demo data" : "Reset demo"
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        serverBaseURL = defaults.string(forKey: PreferenceKey.serverBaseURL) ?? ProcessInfo.processInfo.environment["DEMO_SERVER_BASE_URL"] ?? ""
+        vehicleIntent = defaults.string(forKey: PreferenceKey.vehicleIntent) ?? ""
+        chargingIntent = defaults.string(forKey: PreferenceKey.chargingIntent) ?? "Hardwired home charging"
+        loadSeededAssessment()
     }
+
+    var actionTitle: String { "Reset seeded assessment" }
 
     var actionSubtitle: String {
-        snapshot == nil
-            ? "Load the bundled modern-200A fixture into the native shell."
-            : "Clear the seeded state and return to the intro."
+        "Restore modern-200A fixture and clear the saved vehicle and charging intent."
     }
 
-    var sourceLine: String {
-        snapshot?.sourceSummary ?? "No demo fixture loaded yet."
+    func saveEngineeringIntent() {
+        defaults.set(serverBaseURL, forKey: PreferenceKey.serverBaseURL)
+        defaults.set(vehicleIntent, forKey: PreferenceKey.vehicleIntent)
+        defaults.set(chargingIntent, forKey: PreferenceKey.chargingIntent)
     }
 
-    func toggleDemoData() {
-        if snapshot == nil {
-            loadDemoData()
-        } else {
-            resetDemo()
-        }
+    func resetToSeededAssessment() {
+        defaults.removeObject(forKey: PreferenceKey.vehicleIntent)
+        defaults.removeObject(forKey: PreferenceKey.chargingIntent)
+        vehicleIntent = ""
+        chargingIntent = "Hardwired home charging"
+        loadSeededAssessment()
     }
 
-    func resetDemo() {
-        snapshot = nil
-        loadError = nil
-        fixtureData = nil
-        liveAssessmentId = nil
-        liveStatus = "Fixture cleared. Use demo data to restore the local fallback."
-        liveStatusIsError = false
-    }
-
-    func loadDemoData() {
+    func loadSeededAssessment() {
         do {
             let data = try Self.loadFixtureData(named: fixtureName)
             snapshot = try JSONDecoder().decode(SiteGraphDemoSnapshot.self, from: data)
             fixtureData = data
-            liveAssessmentId = nil
             loadError = nil
-            liveStatus = "Fixture mode: no live observation has been submitted."
-            liveStatusIsError = false
+            isUsingFixtureFallback = true
+            engineeringStatus = "Fixture fallback active. The bundled seeded assessment is shown until a server tool run succeeds."
+            engineeringStatusIsError = false
         } catch {
             snapshot = nil
             loadError = error.localizedDescription
             fixtureData = nil
-            liveAssessmentId = nil
-            liveStatus = "Fixture load failed: \(error.localizedDescription)"
-            liveStatusIsError = true
+            isUsingFixtureFallback = true
+            engineeringStatus = "Fixture load failed: \(error.localizedDescription)"
+            engineeringStatusIsError = true
         }
     }
 
-    func submitConfirmedPanelObservation() async {
-        guard let snapshot, let fixtureData else {
-            setLiveError("Load the bundled fixture before submitting an observation.")
+    func runEngineeringScenario() async {
+        guard snapshot != nil, let fixtureData else {
+            setEngineeringError("The seeded assessment must load before a server tool run can be requested.")
             return
         }
         guard let baseURL = normalizedServerURL else {
-            setLiveError("Enter a reachable server URL before using the live API.")
+            setEngineeringError("Enter a reachable server URL. The fixture fallback remains visible.")
             return
         }
 
-        isSubmittingObservation = true
-        defer { isSubmittingObservation = false }
+        saveEngineeringIntent()
+        isRunningEngineeringScenario = true
+        defer { isRunningEngineeringScenario = false }
 
         do {
-            let assessmentId: String
-            if let liveAssessmentId {
-                assessmentId = liveAssessmentId
-            } else {
-                let created: LiveAssessmentResponse = try await send(
-                    to: baseURL.appendingPathComponent("api/assessments"),
-                    body: fixtureData
-                )
-                assessmentId = created.assessment.assessmentId
-                liveAssessmentId = assessmentId
-            }
-
-            let timestamp = ISO8601DateFormatter().string(from: Date())
-            let event = ObservationAddedEvent(
-                eventId: "event-ios-panel-confirmation-\(UUID().uuidString)",
-                eventName: "observation.added",
-                timestamp: timestamp,
-                producer: "ios-demo",
-                schemaVersion: snapshot.schemaVersion,
-                payload: DemoObservation(
-                    id: "obs-ios-panel-confirmation-\(UUID().uuidString)",
-                    kind: "label_text",
-                    field: "panel_label_confirmation",
-                    value: .string("Panel label confirmed by user"),
-                    unit: nil,
-                    status: .confirmed,
-                    sourceType: .userSupplied,
-                    confidence: 1,
-                    evidenceIds: ["frame-010"],
-                    timestamp: timestamp,
-                    producer: "ios-demo",
-                    assumptions: [],
-                    notes: ["Confirmed during the guided demo."]
+            let created: LiveAssessmentResponse = try await send(
+                EngineeringRequestBuilder.createAssessmentRequest(
+                    baseURL: baseURL,
+                    fixtureData: fixtureData
                 )
             )
-            let eventData = try JSONEncoder().encode(event)
-            let updated: LiveAssessmentResponse = try await send(
-                to: baseURL
-                    .appendingPathComponent("api/assessments")
-                    .appendingPathComponent(assessmentId)
-                    .appendingPathComponent("events"),
-                body: eventData
+            let response: LiveAssessmentResponse = try await send(
+                EngineeringRequestBuilder.engineeringToolRunRequest(
+                    baseURL: baseURL,
+                    assessmentId: created.assessment.assessmentId
+                )
             )
-            self.snapshot = updated.assessment
-            liveStatus = "Live API confirmed one observation and returned validated SiteGraph state."
-            liveStatusIsError = false
+            self.snapshot = response.assessment
+            isUsingFixtureFallback = false
+            engineeringStatus = "Server tool run returned the current assessment. Results below are server-provided."
+            engineeringStatusIsError = false
         } catch {
-            setLiveError("Live API unavailable: \(error.localizedDescription). The bundled fixture remains active.")
+            restoreFixtureFallback(after: error)
+        }
+    }
+
+    private func restoreFixtureFallback(after error: Error) {
+        do {
+            guard let fixtureData else {
+                throw NSError(domain: "SiteGraphDemo", code: 2, userInfo: [NSLocalizedDescriptionKey: "No bundled fixture is loaded"])
+            }
+            snapshot = try JSONDecoder().decode(SiteGraphDemoSnapshot.self, from: fixtureData)
+            isUsingFixtureFallback = true
+            engineeringStatus = "Server tool run unavailable: \(error.localizedDescription). Showing the bundled fixture fallback."
+            engineeringStatusIsError = true
+        } catch {
+            snapshot = nil
+            isUsingFixtureFallback = true
+            engineeringStatus = "Server tool run failed and the fixture fallback could not be restored: \(error.localizedDescription)"
+            engineeringStatusIsError = true
         }
     }
 
@@ -384,12 +385,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
         return url
     }
 
-    private func send<Response: Decodable>(to url: URL, body: Data) async throws -> Response {
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = body
-
+    private func send<Response: Decodable>(_ request: URLRequest) async throws -> Response {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
@@ -401,9 +397,10 @@ final class SiteGraphDemoViewModel: ObservableObject {
         return try JSONDecoder().decode(Response.self, from: data)
     }
 
-    private func setLiveError(_ message: String) {
-        liveStatus = message
-        liveStatusIsError = true
+    private func setEngineeringError(_ message: String) {
+        isUsingFixtureFallback = true
+        engineeringStatus = message
+        engineeringStatusIsError = true
     }
 
     private static func loadFixtureData(named name: String) throws -> Data {
@@ -413,15 +410,6 @@ final class SiteGraphDemoViewModel: ObservableObject {
         }
         return try Data(contentsOf: url)
     }
-}
-
-private struct ObservationAddedEvent: Encodable {
-    let eventId: String
-    let eventName: String
-    let timestamp: String
-    let producer: String
-    let schemaVersion: String
-    let payload: DemoObservation
 }
 
 private struct LiveAssessmentResponse: Decodable {
