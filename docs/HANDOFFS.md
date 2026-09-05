@@ -17,9 +17,10 @@
   - Need: source URLs, jurisdiction, effective date, and limitations.
   - Acceptance: claims-to-source rows in `research/SOURCES.md`.
 
-- **Main/orchestrator -> demo lane**: script the golden walkthrough and fallback ladder.
-  - Need: seeded property, fallback trigger points, and judge Q&A.
-  - Acceptance: the demo can run without improvising the flow.
+- **Demo lane -> iOS + API lanes**: integrate the rehearsal artifacts into the executable demo.
+  - Available: resettable modern/constrained/insufficient-data rehearsal assets, a network/capture fallback script, and provenance-bound judge Q&A in `docs/DEMO.md` and `demo/`.
+  - Need: in-app fixture selection, a one-action reset, deterministic engineering/cost API-to-iPhone rendering, and a clearly labeled missing-data UI.
+  - Acceptance: each scripted path can be selected and reset in the app without representing seeded output as live capture or a live calculation.
 
 ## Completed handoffs
 - Repo inspection complete.
