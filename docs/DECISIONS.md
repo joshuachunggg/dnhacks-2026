@@ -141,3 +141,13 @@ Append-only log template:
 - Reason: This preserves native capture quality, keeps API credentials and authoritative tools on the server, and constrains streamed UI to approved SwiftUI components.
 - Consequences: Decision 0007 no longer excludes A2UI. Agent output may propose only validated A2UI surfaces and typed tool calls; it never emits arbitrary client code or writes unvalidated facts.
 - Revisit trigger: The approved component catalog cannot express a required demo interaction, or Realtime cannot meet the demo's latency/reliability needs.
+
+### 0014
+- ID: 0014
+- Date: 2026-09-05
+- Status: locked for the demo path
+- Decision: Keep the first engineering calculator pure and SiteGraph-only, with panel service size, spare breaker spaces, and route measurement as its required evidence.
+- Context: The demo needs deterministic, inspectable feasibility guidance before API, iOS, Realtime, or cost integration.
+- Reason: A small validated boundary makes missing evidence explicit and prevents the calculator from inventing residential electrical facts.
+- Consequences: The calculator returns `insufficient_data` rather than a recommendation when those facts are absent; current recommendations stay preliminary and require professional verification.
+- Revisit trigger: A validated load-inventory contract is added as a separate typed input.

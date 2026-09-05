@@ -1,9 +1,13 @@
 # Handoffs
 
 ## Open handoffs
-- **Main/orchestrator -> engineering + server lanes**: define deterministic scenario input/output contracts and execute one scenario from SiteGraph state.
-  - Need: typed charger/load and cost inputs, explicit assumptions, and result schemas.
-  - Acceptance: a changed SiteGraph input yields a newly computed result that the iPhone renders with status and warnings.
+- **Engineering/server -> API + iOS lanes**: wire the completed pure engineering calculator into the validated assessment flow and render the typed result.
+  - Available: `runEngineeringScenario(input)` accepts only SiteGraph v0 and returns a validated result with provenance, status, handoff, disclaimer, and explicit insufficient-data outcome.
+  - Acceptance: a changed SiteGraph input yields the newly computed result in the iPhone with status and warnings.
+
+- **Main/orchestrator -> engineering + server lanes**: define the separate deterministic cost contract.
+  - Need: typed cost inputs, explicit assumptions, and result schema.
+  - Acceptance: cost remains a separate tool run from engineering feasibility.
 
 - **Sprint 2 -> Realtime + iOS lanes**: add a server-owned Realtime session that asks for one missing fact and submits it through the existing `observation.added` boundary.
   - Need: no long-lived phone API key and typed agent/tool messages.
@@ -26,5 +30,6 @@
 - First validated observation API created: `POST /api/assessments`, `GET /api/assessments/:id`, and `POST /api/assessments/:id/events` use in-memory state for the demo path.
 - iOS live-round-trip control added: it creates the fixture assessment, submits one confirmed panel-label observation, reloads the response, and retains the local fixture on error.
 - Physical iPhone acceptance completed: the phone reached the local API, submitted the observation, and rendered the validated response.
+- Deterministic engineering contract completed in `apps/server/src/engineering-calculator.ts`; all three SiteGraph fixtures and a changed-input case pass typed tests, with no API or iOS integration yet.
 - Demo lane scaffold created in `demo/` with seeded assessment assets and reset notes.
 - Research lane source card added in `research/` with Austin / Austin Energy cost anchors.

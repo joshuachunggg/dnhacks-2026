@@ -37,8 +37,8 @@
 - [x] First seeded vertical slice is wired and accepted on a physical iPhone.
 
 ## Next 2 hours
-- TODO: define and test deterministic engineering and cost tool contracts.
-- TODO: run one deterministic scenario from current SiteGraph state and render the result.
+- [x] Define and test the deterministic engineering tool contract against all three SiteGraph fixtures.
+- TODO: define the separate cost tool contract and render deterministic engineering results through the API/iOS flow.
 - TODO: add the Realtime agent only after the deterministic tool boundary is stable.
 
 ## Demo readiness

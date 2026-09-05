@@ -64,6 +64,17 @@ Each tool must return:
 - `ok: true` with typed payload, or
 - `ok: false` with `insufficient_data` / `validation_error` / `not_supported` / `needs_user_confirmation`.
 
+## Deterministic engineering scenario v0
+`apps/server/src/engineering-calculator.ts` exports the pure `runEngineeringScenario(input)` calculator and `EngineeringScenarioResultSchema`. The calculator parses SiteGraph v0 at entry and parses its result before return; it performs no I/O, timestamps, network calls, or state writes.
+
+- Input: validated `SiteGraphV0`; no separate user/load input is accepted in this slice.
+- Required facts: panel `serviceAmps`, `spareBreakerSpaces`, and a `route_length` measurement.
+- Output: assessment status, current recommendation, missing-input list, unresolved and professional-verification requirements, installer handoff, validated `ToolRun` provenance, and the safety disclaimer.
+- Missing required or unusable facts return `insufficient_data` with no current recommendation; they are never inferred. A fact is usable only when it is plausible, evidence-backed, not contradicted/superseded, and has an accepted status/source. Service-amperage plausibility uses a conservative 60 A lower bound; lower values require new service-amperage evidence. Route selection is first-in-array among usable positive `ft`/`feet` route measurements.
+- Every complete deterministic feasibility result has assessment status `professional_verification_required`: true load calculation, breaker/conductor compatibility, and electrician review remain required. Its `ToolRun.resultStatus` is `conditional`, the closest permitted execution status—not an approval.
+- `applyEngineeringScenario(graph, result)` is a typed, validated, pure adapter. It replaces the stable deterministic ToolRun by ID (so applying the same result is idempotent), replaces its deterministic engineering scenario, and updates `finalAssessment` in one returned validated graph. A result contains a typed snapshot plus SHA-256 fingerprint of the calculation-relevant panel and selected-route facts/evidence; application rejects stale results when those current graph inputs no longer match. Since `EngineeringScenario.status` does not permit `professional_verification_required`, it maps that assessment state to scenario `conditional` (or preserves `insufficient_data`).
+- Tool provenance contains usable panel and route evidence IDs, source/status in `inputSummary`, and an injected calculation timestamp (default is a deterministic epoch value), never the prior `finalAssessment.timestamp`.
+
 ## API boundary
 The current first server boundary accepts and returns only validated JSON:
 - `POST /api/assessments`
