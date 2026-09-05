@@ -1,6 +1,7 @@
 {
   "schemaVersion": "0.1.0",
   "assessmentId": "assessment-insufficient-data",
+  "evidence": [],
   "site": {
     "id": "site-insufficient-data",
     "label": "Insufficient data demo property",

@@ -1,6 +1,12 @@
 {
   "schemaVersion": "0.1.0",
   "assessmentId": "assessment-modern-200a",
+  "evidence": [
+    { "id": "frame-001", "type": "image_frame", "label": "Garage west wall capture" },
+    { "id": "frame-010", "type": "image_frame", "label": "Main panel capture" },
+    { "id": "frame-011", "type": "image_frame", "label": "Main panel spare-space capture" },
+    { "id": "route-modern-200a", "type": "measurement", "label": "Modern home route measurement" }
+  ],
   "site": {
     "id": "site-modern-200a",
     "label": "Modern 200 A home",

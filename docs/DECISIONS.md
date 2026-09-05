@@ -151,3 +151,13 @@ Append-only log template:
 - Reason: A small validated boundary makes missing evidence explicit and prevents the calculator from inventing residential electrical facts.
 - Consequences: The calculator returns `insufficient_data` rather than a recommendation when those facts are absent; current recommendations stay preliminary and require professional verification.
 - Revisit trigger: A validated load-inventory contract is added as a separate typed input.
+
+### 0015
+- ID: 0015
+- Date: 2026-09-05
+- Status: locked for the deterministic calculator boundary
+- Decision: Use a SiteGraph evidence registry and invocation-captured timestamps for deterministic fact and result integrity.
+- Context: Nonempty evidence IDs were not resolvable against shared state, and result provenance timestamps could otherwise validate each other without a trusted value.
+- Reason: Registry resolution keeps valid non-fixture evidence extensible while rejecting unknown/replaced references; a trusted apply argument rejects both isolated and coordinated result-timestamp tampering.
+- Consequences: Panel and route facts must resolve all evidence IDs in `graph.evidence`; non-epoch calculator callers must propagate their captured timestamp into the apply boundary.
+- Revisit trigger: A signed evidence/provenance service replaces the in-graph registry or trusted invocation boundary.
