@@ -16,47 +16,30 @@
 | ID | Task | Owner | Status | Branch / worktree | Dependencies | Acceptance test |
 | --- | --- | --- | --- | --- | --- | --- |
 | R-01 | Inspect current directory, Git, and GitHub state | Hermes | DONE | main worktree | none | Versions and auth status captured |
-| R-02 | Verify toolchain versions (`git`, `gh`, `node`, `pnpm`) | Hermes | DONE | main worktree | none | Version output recorded |
-| R-03 | Confirm GitHub auth status | Hermes | DONE | main worktree | none | `gh auth status` succeeds |
-| R-04 | Create the local repository scaffold | Hermes | DONE | `dnhacks-2026` | none | Required files exist |
-| R-05 | Write documentation and workflow infrastructure | Hermes | DONE | `dnhacks-2026` | R-04 | Docs are present and concise |
-| R-06 | Initialize Git and create the initial commit | Hermes | TODO | `dnhacks-2026` | R-04, R-05 | Clean commit on `main` |
-| R-07 | Create and push the private GitHub repository | Hermes | TODO | `dnhacks-2026` | R-06 | Remote exists and push succeeds |
+| R-02 | Verify toolchain versions (`git`, `gh`, `node`, `pnpm`, `swift`, `xcodebuild`) | Hermes | DONE | main worktree | none | Version output recorded |
+| R-03 | Update repo thesis, docs, and monorepo scaffold | Hermes | DONE | `dnhacks-2026` | R-01 | Docs and directories exist |
+| R-04 | Define SiteGraph v0 and fixture set | Hermes | IN PROGRESS | `dnhacks-2026` | R-03 | Schema + three fixtures exist |
+| R-05 | Validate fixtures in TypeScript and Swift | Hermes | IN PROGRESS | `dnhacks-2026` | R-04 | Both checks run successfully |
+| R-06 | Create the first thin vertical slice | Hermes | TODO | `dnhacks-2026` | R-04, R-05 | One observation round-trips through UI/state |
+| R-07 | Stand up backend and iOS workstreams | Hermes | TODO | `dnhacks-2026` | R-04 | Lane ownership is clear |
+| R-08 | Create and push the initial GitHub commit | Hermes | TODO | `dnhacks-2026` | R-03, R-04, R-05 | Clean commit on `main` and remote push succeeds |
 
-## Pre-hackathon readiness
-- [x] Inspect current directory and Git/GitHub state
-- [x] Verify `git`, `gh`, `node`, and `pnpm` versions
-- [x] Confirm `gh auth status` succeeds
-- [x] Create the local scaffold
-- [x] Write docs and generic verification tooling
-- [ ] Create the GitHub repo and push the initial commit
+## Current focus
+- [x] Repo inspection complete.
+- [x] Docs updated to the real DNHacks thesis.
+- [x] Monorepo scaffold directories created.
+- [x] Golden fixture payloads created.
+- [ ] TypeScript and Swift fixture validation both pass.
+- [ ] First vertical slice is wired.
 
-## First 2 hours
-- TODO: Freeze the challenge scope.
-- TODO: Define the first interface contract.
-- TODO: Decide which steps are live versus fixture-backed.
-- TODO: Confirm the demo happy path on a phone.
+## Next 2 hours
+- TODO: run the validation scripts and fix schema drift.
+- TODO: start backend, iOS, research, and demo workstreams once contracts are stable.
+- TODO: wire one observation end to end.
 
-## Core build
-- TODO: Implement the survey entry flow.
-- TODO: Implement structured observation output.
-- TODO: Implement deterministic calculators.
-- TODO: Implement the proposal UI.
-
-## Integration
-- TODO: Wire the model boundary to typed tools.
-- TODO: Wire fallback states and cached fixtures.
-- TODO: Validate the critical flow end to end.
-
-## Demo / polish
-- TODO: Polish mobile layout and copy.
-- TODO: Verify backup screenshots and prerecorded fallback.
-- TODO: Tighten error messages and loading states.
-
-## Submission
-- TODO: Final pass on docs and demo contract.
-- TODO: Confirm deployment URL and repo state.
-- TODO: Record commit SHA and final notes.
+## Demo readiness
+- Not ready yet.
+- The narrative is now pinned to SiteGraph v0, but runtime code still needs the first vertical slice.
 
 ## Handoff template
 - Changed files:

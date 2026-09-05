@@ -1,0 +1,202 @@
+{
+  "schemaVersion": "0.1.0",
+  "assessmentId": "assessment-constrained-100a",
+  "site": {
+    "id": "site-constrained-100a",
+    "label": "Constrained 100 A older home",
+    "address": "456 Elm Street, Austin, TX",
+    "jurisdiction": {
+      "city": "Austin",
+      "county": "Travis",
+      "state": "TX",
+      "ahj": "City of Austin"
+    },
+    "utility": "Austin Energy"
+  },
+  "proposedEvseLocation": {
+    "id": "evse-constrained-100a",
+    "label": "Detached garage wall",
+    "wall": "detached garage east wall",
+    "status": "confirmed",
+    "sourceType": "user_supplied",
+    "confidence": 0.92,
+    "evidenceIds": ["frame-101"],
+    "timestamp": "2026-09-05T13:10:00-05:00",
+    "producer": "demo-seed",
+    "assumptions": [],
+    "notes": ["Route may require exterior conduit."]
+  },
+  "electricalPanel": {
+    "id": "panel-constrained-100a",
+    "label": "Older main panel",
+    "status": "proposed",
+    "sourceType": "visually_observed",
+    "confidence": 0.72,
+    "evidenceIds": ["frame-110"],
+    "timestamp": "2026-09-05T13:10:10-05:00",
+    "producer": "seed-vision",
+    "manufacturer": "Unknown",
+    "modelFamily": "Legacy",
+    "serviceVoltage": 240,
+    "serviceAmps": 100,
+    "busRatingAmps": 100,
+    "breakerSpaceCount": 20,
+    "spareBreakerSpaces": 2,
+    "visibleConditionNotes": ["Legacy panel with limited spare spaces.", "Load headroom is not established by image alone."],
+    "assumptions": ["Service size inferred from visible main marking."],
+    "notes": ["Panel age suggests electrician verification is needed."]
+  },
+  "measurements": [
+    {
+      "id": "route-constrained-100a",
+      "kind": "route_length",
+      "value": 54,
+      "unit": "ft",
+      "status": "calculated",
+      "sourceType": "measured",
+      "confidence": 0.75,
+      "evidenceIds": ["frame-101", "frame-110"],
+      "timestamp": "2026-09-05T13:10:20-05:00",
+      "producer": "route-estimator-v0",
+      "assumptions": ["Exterior run and corner turns included."],
+      "notes": ["Detached garage raises routing complexity."]
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs-legacy-panel",
+      "kind": "panel",
+      "field": "visibleConditionNotes",
+      "value": "Legacy panel with limited spare spaces",
+      "status": "proposed",
+      "sourceType": "visually_observed",
+      "confidence": 0.79,
+      "evidenceIds": ["frame-110"],
+      "timestamp": "2026-09-05T13:10:11-05:00",
+      "producer": "seed-vision",
+      "assumptions": [],
+      "notes": ["This is not a final safety diagnosis."]
+    },
+    {
+      "id": "obs-spaces-legacy",
+      "kind": "panel",
+      "field": "spareBreakerSpaces",
+      "value": 2,
+      "unit": "spaces",
+      "status": "proposed",
+      "sourceType": "visually_observed",
+      "confidence": 0.7,
+      "evidenceIds": ["frame-110"],
+      "timestamp": "2026-09-05T13:10:12-05:00",
+      "producer": "seed-vision",
+      "assumptions": [],
+      "notes": ["Two spaces do not establish capacity for a 48 A EVSE."]
+    }
+  ],
+  "engineeringScenarios": [
+    {
+      "id": "scenario-16a",
+      "label": "16 A managed or low-current charger",
+      "chargerCurrentAmps": 16,
+      "status": "conditional",
+      "resultSummary": "The safest demo recommendation is a lower-current or managed-charging path pending a real load screen.",
+      "requirements": ["Load inventory", "Electrician verification"],
+      "warnings": ["Legacy service is constrained."],
+      "assumptions": ["Night-time charging only."],
+      "evidenceIds": ["route-constrained-100a"],
+      "timestamp": "2026-09-05T13:10:30-05:00"
+    },
+    {
+      "id": "scenario-40a",
+      "label": "40 A hardwired charger",
+      "chargerCurrentAmps": 40,
+      "status": "fail",
+      "resultSummary": "Not recommended as-is for the constrained 100 A fixture without major additional evidence.",
+      "requirements": ["Panel/service upgrade path"],
+      "warnings": ["Likely too aggressive for the demo load story."],
+      "assumptions": ["No spare load is assumed."],
+      "evidenceIds": ["route-constrained-100a"],
+      "timestamp": "2026-09-05T13:10:31-05:00"
+    }
+  ],
+  "toolRuns": [
+    {
+      "id": "tool-load-screen-100a",
+      "toolName": "runEngineeringScenario",
+      "version": "0.1.0",
+      "inputSummary": "100 A legacy service, detached garage, 16 A and 40 A candidate EVSE loads",
+      "resultStatus": "conditional",
+      "warnings": ["Image alone cannot prove hidden service capacity."],
+      "assumptions": ["Conservative inventory-based load screen used."],
+      "evidenceIds": ["frame-110", "route-constrained-100a"],
+      "output": {
+        "recommendedScenario": "16 A managed or low-current charger",
+        "altScenario": "panel or service upgrade required for higher power"
+      },
+      "timestamp": "2026-09-05T13:10:40-05:00"
+    }
+  ],
+  "costScenarios": [
+    {
+      "id": "cost-constrained-100a",
+      "label": "Constrained older home with exterior routing",
+      "status": "conditional",
+      "totalLow": 2200,
+      "totalExpected": 3600,
+      "totalHigh": 6200,
+      "currency": "USD",
+      "lineItems": [
+        {
+          "id": "hardware",
+          "label": "EVSE hardware",
+          "quantity": 1,
+          "unit": "unit",
+          "low": 400,
+          "expected": 700,
+          "high": 1100,
+          "currency": "USD",
+          "source": "demo cost fixture",
+          "assumptions": ["Lower-current charger or load-managed hardware"]
+        },
+        {
+          "id": "labor",
+          "label": "Labor",
+          "quantity": 10,
+          "unit": "hour",
+          "low": 100,
+          "expected": 135,
+          "high": 165,
+          "currency": "USD",
+          "source": "demo labor-rate fixture",
+          "assumptions": ["Exterior conduit run", "Detached garage"]
+        },
+        {
+          "id": "load-management",
+          "label": "Load-management equipment",
+          "quantity": 1,
+          "unit": "unit",
+          "low": 350,
+          "expected": 650,
+          "high": 900,
+          "currency": "USD",
+          "source": "demo cost fixture",
+          "assumptions": ["Used if load screen comes back tight"]
+        }
+      ],
+      "assumptions": ["No service upgrade included in the expected case."],
+      "warnings": ["Service upgrade may become necessary after electrician review."],
+      "evidenceIds": ["route-constrained-100a"]
+    }
+  ],
+  "finalAssessment": {
+    "status": "professional_verification_required",
+    "summary": "The older 100 A home should stay in a constrained or managed-charging story until a real load screen and electrician review confirm the safe path.",
+    "unresolvedRequirements": ["True load calculation", "Panel age / condition review", "Detached-garage routing review"],
+    "professionalVerificationItems": ["Panel/service verification", "Conduit path and breaker selection", "Permit/inspection path"],
+    "installerHandoff": {
+      "title": "Preliminary EV charger handoff",
+      "bullets": ["Proposed wall: detached garage east wall", "Panel: legacy 100 A service", "Best current demo option: managed or low-current charging"]
+    },
+    "timestamp": "2026-09-05T13:10:50-05:00"
+  }
+}

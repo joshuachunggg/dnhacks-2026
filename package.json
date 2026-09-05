@@ -9,12 +9,15 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke-test.mjs",
-    "check": "pnpm lint && pnpm typecheck && pnpm smoke"
+    "fixtures:check": "tsx scripts/check-fixtures.ts",
+    "swift:check": "swift scripts/check-fixtures.swift",
+    "check": "pnpm lint && pnpm typecheck && pnpm smoke && pnpm fixtures:check && pnpm swift:check"
   },
   "dependencies": {
     "next": "16.3.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -24,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   },
   "packageManager": "pnpm@11.1.3",

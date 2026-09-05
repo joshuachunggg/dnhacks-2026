@@ -5,15 +5,27 @@ const root = process.cwd();
 const requiredFiles = [
   'AGENTS.md',
   'README.md',
+  'docs/PLAN.md',
   'docs/ARCHITECTURE.md',
+  'docs/CONTRACTS.md',
   'docs/DECISIONS.md',
   'docs/DEMO.md',
+  'docs/STATUS.md',
+  'docs/HANDOFFS.md',
+  'docs/SAFETY.md',
   'docs/TASKS.md',
+  'research/SOURCES.md',
+  'bugs/BUGS.md',
   '.env.example',
   '.gitignore',
-  'src/app/page.tsx',
-  'src/app/layout.tsx',
+  'pnpm-workspace.yaml',
+  'packages/schemas/src/sitegraph.ts',
+  'packages/fixtures/sitegraph/modern-200a.json',
+  'packages/fixtures/sitegraph/constrained-100a.json',
+  'packages/fixtures/sitegraph/insufficient-data.json',
   'scripts/smoke-test.mjs',
+  'scripts/check-fixtures.ts',
+  'scripts/check-fixtures.swift',
   'package.json',
   'pnpm-lock.yaml',
 ];
@@ -34,12 +46,14 @@ for (const script of requiredScripts) {
 }
 
 const page = fs.readFileSync(path.join(root, 'src/app/page.tsx'), 'utf8');
-if (!page.includes('DNHacks project scaffold ready')) {
-  throw new Error('Scaffold page copy is missing');
+for (const phrase of ['SiteGraph v0', 'Assessment', 'modern 200 A']) {
+  if (!page.includes(phrase)) {
+    throw new Error(`Scaffold page is missing: ${phrase}`);
+  }
 }
 
 const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
-for (const phrase of ['Pre-hackathon scaffold only.', 'Working hypothesis', 'pnpm smoke']) {
+for (const phrase of ['spatial AI field-engineer demo', 'packages/schemas', 'pnpm fixtures:check']) {
   if (!readme.includes(phrase)) {
     throw new Error(`README is missing: ${phrase}`);
   }

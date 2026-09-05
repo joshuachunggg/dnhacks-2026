@@ -1,76 +1,56 @@
 # Demo
 
 ## Objective
-Show a live, believable end-to-end flow that turns a phone-based survey into a structured retrofit proposal.
+Show a live, believable end-to-end flow that turns a phone-based assessment into structured SiteGraph state, deterministic feasibility calculations, and an installer handoff.
 
-## Tentative 90-second happy path
-1. Open the mobile web app.
-2. Start the survey.
-3. Show or upload a water-heater image.
-4. Receive a structured equipment identification.
-5. Provide or show electrical-panel context.
-6. Generate a retrofit assessment.
-7. Adjust one assumption in the interactive proposal.
-8. Show the updated cost, savings, and grid-flexibility result.
+## Exact demo story
+1. Open the app on iPhone or the demo shell.
+2. Start a new assessment.
+3. Mark the proposed charger wall or location.
+4. Capture the electrical panel or use the seeded fallback frame.
+5. Let the app surface one or two visible observations with confidence and evidence.
+6. Fill the structured form for vehicle and charging needs.
+7. Run the deterministic charger / load / cost scenarios.
+8. Show the results with clear pass / conditional / insufficient-data status.
+9. Open the installer handoff view.
+10. If live capture fails, switch to the disclosed fixture path and keep going.
 
-## What must be live
-- The browser app shell.
-- The survey entry point.
-- The structured observation handoff.
-- The proposal view and assumption update path.
-- The visible error state if a live step fails.
+## What must stay visible
+- Proposed EVSE location.
+- At least one evidence-backed observation.
+- One measurement or route estimate.
+- One deterministic engineering result.
+- One cost range with line items.
+- The status reason and unresolved questions.
+- The fallback indicator when a fixture is used.
 
-## What may use deterministic fixtures
-- Fixture images.
-- Prerecorded voice or survey text.
-- Cached sample observations.
-- Cached deterministic calculator outputs.
-- A prerecorded walkthrough as the final fallback.
-
-## Definition of done
-- The demo starts from a clean browser tab on mobile.
-- The user can complete the survey path without a hidden manual reset.
-- Every number shown to judges comes from a deterministic calculation or a clearly disclosed fixture.
-- The proposal updates when one assumption changes.
-- The fallback path is ready without editing code during the demo.
-
-## Demo data / fixture checklist
-- One water-heater image fixture.
-- One electrical-panel context fixture.
-- One cached observation payload.
-- One cached proposal payload.
-- One screenshot or prerecorded backup path.
-- No copyrighted or secret material.
-
-## Pre-demo checklist
-- Environment variables are set.
-- Deployment is reachable.
-- Phone permissions are granted.
-- Network is stable.
-- Logging is visible.
-- Backup assets are loaded.
-- The demo browser tab is already open.
+## Seeded demo data
+- Modern 200 A home fixture.
+- Constrained 100 A older home fixture.
+- Insufficient-data fixture.
+- One jurisdiction card fixture.
+- One cost-rate assumption fixture.
 
 ## Failure ladder
-1. Try the live flow.
-2. Retry once if the failure is transient.
-3. Switch to fixture input.
-4. Switch to the prerecorded walkthrough or screenshots.
+1. Live phone capture.
+2. Seeded fixture with the same schema.
+3. Cached observation / assessment replay.
+4. Screenshot or prerecorded walkthrough.
 
-Do not fake results. If a fixture is used, say so explicitly.
+## Reset requirement
+There should be a one-action reset that restores the seeded assessment and clears transient demo state.
 
-## Known risks
-- Live image capture may fail on the device. Owner: @TBD
-- The model step may return an invalid schema. Owner: @TBD
-- Deterministic calculators may need one more input than expected. Owner: @TBD
-- Deployment or network latency may slow the first load. Owner: @TBD
-
-## Judge questions
+## Judge Q&A
 Be ready to answer:
-- What is actually happening under the hood?
-- Which parts are model-driven?
-- Which parts are deterministic?
-- Where do assumptions come from?
-- What is the latency budget?
-- What are the limitations?
-- What is the next production step?
+- What facts were actually observed?
+- Which values were user-supplied?
+- Which outputs were calculated deterministically?
+- What remains professional-verification-required?
+- What happens when the house is older or constrained?
+- What is the demo hiding, if anything?
+
+## Anti-goals
+- No fake scanning animation without typed state.
+- No hardcoded final answer unrelated to the captured data.
+- No hidden manual jump into the last screen.
+- No claim that the app certifies electrical safety.

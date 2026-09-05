@@ -101,3 +101,33 @@ Append-only log template:
 - Reason: The scope is not frozen yet, and premature feature work is likely waste.
 - Consequences: Only documentation, workflow infrastructure, generic boilerplate, and harmless verification tooling belong here for now.
 - Revisit trigger: The official challenge prompt is released and scope is frozen.
+
+### 0010
+- ID: 0010
+- Date: 2026-09-05
+- Status: locked for the demo path
+- Decision: Make SiteGraph v0 the canonical shared state boundary.
+- Context: The demo needs one typed state object that can survive camera, agent, and backend transitions.
+- Reason: A single schema keeps the story legible and the contract testable.
+- Consequences: Every lane should map into SiteGraph instead of inventing its own truth model.
+- Revisit trigger: Only if the challenge mandates a different authoritative data model.
+
+### 0011
+- ID: 0011
+- Date: 2026-09-05
+- Status: reversible
+- Decision: Add a minimal pnpm workspace scaffold with explicit future lanes.
+- Context: The repo needs a place for iOS, backend, schemas, fixtures, and docs without moving the live app immediately.
+- Reason: It preserves the current root app while creating a migration path for the larger build.
+- Consequences: Future work can land in owned directories without colliding with the demo shell.
+- Revisit trigger: If the workspace layout slows the demo path, collapse back to a flatter structure.
+
+### 0012
+- ID: 0012
+- Date: 2026-09-05
+- Status: locked for verification
+- Decision: Verify the canonical fixture in both TypeScript and Swift.
+- Context: The challenge asks for a shared contract that both languages can decode.
+- Reason: Cross-language decoding catches schema drift early.
+- Consequences: The repo should include a small TS check and a standalone Swift check script.
+- Revisit trigger: None.

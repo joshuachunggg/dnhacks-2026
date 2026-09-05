@@ -1,9 +1,9 @@
 # AGENTS.md — DNHacks 2026 operating guide
 
 ## Context
-- DNHacks 2026, two-person team, 24-hour build.
-- Hermes/Codex are development tools only; they are not part of the shipped product.
-- This repo starts as a pre-hackathon scaffold. Product scope stays tentative until the official prompt is confirmed.
+- DNHacks 2026 is a hackathon build for a spatial AI field engineer.
+- The shipped product is not Hermes/Codex; they are development tools only.
+- Root status is a Next.js + TypeScript scaffold. The iOS and backend lanes are still being built.
 
 ## Priority order
 1. Working end-to-end demo
@@ -20,10 +20,22 @@
 - Do not add dependencies for hypothetical future features.
 
 ## Repository map
-- `docs/ARCHITECTURE.md` — source of truth for boundaries and data flow.
-- `docs/DECISIONS.md` — append-only record of consequential choices.
-- `docs/DEMO.md` — protects the judging path.
-- `docs/TASKS.md` — lightweight coordination board.
+- `README.md` — product front door.
+- `docs/PLAN.md` — P0/P1/P2 scope, stages, dependencies, and acceptance criteria.
+- `docs/ARCHITECTURE.md` — current boundaries and data flow.
+- `docs/CONTRACTS.md` — canonical schemas and event/tool contracts.
+- `docs/DECISIONS.md` — append-only decision log.
+- `docs/STATUS.md` — current repo state and next integration point.
+- `docs/DEMO.md` — demo script, seeded data, and fallback path.
+- `docs/SAFETY.md` — claim boundaries and prohibited actions.
+- `docs/HANDOFFS.md` — cross-lane requests and completions.
+- `research/SOURCES.md` — claim-to-source ledger.
+- `bugs/BUGS.md` — prioritized bug ledger.
+- `apps/ios` — future native iPhone shell.
+- `apps/server` — future backend and deterministic tooling.
+- `packages/schemas` — canonical SiteGraph types and validators.
+- `packages/fixtures` — golden fixture payloads.
+- `scripts` — smoke/fixture validation helpers.
 
 ## Required workflow
 1. Inspect the relevant files first.
@@ -58,6 +70,8 @@ Use only scripts that exist in `package.json`:
 - `pnpm lint`
 - `pnpm typecheck`
 - `pnpm smoke`
+- `pnpm fixtures:check`
+- `pnpm swift:check`
 - `pnpm build`
 - `pnpm check`
 
@@ -65,7 +79,9 @@ Use only scripts that exist in `package.json`:
 - Update `docs/ARCHITECTURE.md` when boundaries change.
 - Update `docs/DECISIONS.md` for consequential choices.
 - Update `docs/DEMO.md` when the critical flow changes.
-- Update `docs/TASKS.md` when work status changes.
+- Update `docs/STATUS.md` when repo state changes.
+- Update `docs/HANDOFFS.md` when work is handed off.
+- Update `docs/PLAN.md` when scope or sequencing changes.
 
 ## Hackathon rule
 - Working demo > robustness > elegance > theoretical completeness.
