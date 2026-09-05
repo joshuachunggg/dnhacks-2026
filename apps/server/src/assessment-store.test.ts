@@ -8,6 +8,7 @@ import {
   AssessmentNotFoundError,
   createInMemoryAssessmentStore,
 } from './assessment-store';
+import { runEngineeringScenario } from './engineering-calculator';
 
 const fixturePath = join(process.cwd(), 'packages/fixtures/sitegraph/modern-200a.json');
 const fixture = decodeSiteGraph(JSON.parse(readFileSync(fixturePath, 'utf8')));
@@ -68,4 +69,16 @@ test('reports a missing assessment instead of silently creating one', () => {
     () => store.appendObservationEvent('missing-assessment', observationAddedEvent()),
     AssessmentNotFoundError,
   );
+});
+
+test('atomically persists a canonical engineering scenario result', () => {
+  const store = createInMemoryAssessmentStore();
+  const created = store.create(fixture);
+  const result = runEngineeringScenario(created, '2030-01-02T03:04:05.000Z');
+
+  const updated = store.applyEngineeringScenario(created.assessmentId, result);
+
+  assert.equal(updated.toolRuns.at(-1)?.id, result.toolRun.id);
+  assert.equal(updated.engineeringScenarios.at(-1)?.id, `engineering-scenario-${created.assessmentId}`);
+  assert.equal(store.get(created.assessmentId)?.toolRuns.at(-1)?.timestamp, result.toolRun.timestamp);
 });
