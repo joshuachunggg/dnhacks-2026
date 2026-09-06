@@ -64,6 +64,7 @@ final class RoomModelPreviewController: UIViewController, UIGestureRecognizerDel
         placementTap.delegate = self
         sceneView.addGestureRecognizer(placementTap)
 
+        styleImportedGeometry(in: scene)
         addCamera(to: scene, sceneView: sceneView)
         addLighting(to: scene)
         addModelRelativeWallLabels(to: scene)
@@ -110,15 +111,7 @@ final class RoomModelPreviewController: UIViewController, UIGestureRecognizerDel
         guard let result = sceneView.hitTest(recognizer.location(in: sceneView), options: [.searchMode: SCNHitTestSearchMode.closest.rawValue]).first,
               isImportedModelNode(result.node) else { return }
         let point = result.worldCoordinates
-        let bounds = scene.map(modelBounds(in:))
         let isWall = abs(result.worldNormal.y) <= 0.8
-        let modelRelativeWall = isWall ? wallReference(for: result.worldNormal) : nil
-        let alongWallMeters: Float?
-        if abs(result.worldNormal.x) >= abs(result.worldNormal.z) {
-            alongWallMeters = bounds.map { point.z - $0.minimum.z }
-        } else {
-            alongWallMeters = bounds.map { point.x - $0.minimum.x }
-        }
         let pose = SpatialModelPose(
             x: point.x,
             y: point.y,
@@ -126,10 +119,7 @@ final class RoomModelPreviewController: UIViewController, UIGestureRecognizerDel
             normalX: result.worldNormal.x,
             normalY: result.worldNormal.y,
             normalZ: result.worldNormal.z,
-            surface: isWall ? "wall" : "floor",
-            modelRelativeWall: modelRelativeWall,
-            alongWallMeters: alongWallMeters,
-            heightAboveModelFloorMeters: bounds.map { max(0, point.y - $0.minimum.y) }
+            surface: isWall ? "wall" : "floor"
         )
         if request.kind != .routePoint {
             acceptedPlacementCallId = request.callId
@@ -347,6 +337,29 @@ final class RoomModelPreviewController: UIViewController, UIGestureRecognizerDel
         sceneView.defaultCameraController.target = center
     }
 
+    private func styleImportedGeometry(in scene: SCNScene) {
+        scene.rootNode.enumerateChildNodes { node, _ in
+            guard let geometry = node.geometry, node.camera == nil, node.light == nil else { return }
+            let color = importedGeometryColor(for: node)
+            geometry.materials = geometry.materials.map { sourceMaterial in
+                let material = sourceMaterial.copy() as! SCNMaterial
+                material.diffuse.contents = color
+                material.metalness.contents = 0
+                material.roughness.contents = 0.88
+                return material
+            }
+        }
+    }
+
+    private func importedGeometryColor(for node: SCNNode) -> UIColor {
+        let name = node.name?.lowercased() ?? ""
+        if name.contains("wall") { return UIColor(red: 0.46, green: 0.52, blue: 0.58, alpha: 1) }
+        if name.contains("floor") { return UIColor(red: 0.28, green: 0.34, blue: 0.39, alpha: 1) }
+        if name.contains("ceiling") { return UIColor(red: 0.62, green: 0.67, blue: 0.72, alpha: 1) }
+        if name.contains("door") || name.contains("window") { return UIColor(red: 0.68, green: 0.54, blue: 0.40, alpha: 1) }
+        return UIColor(red: 0.38, green: 0.57, blue: 0.66, alpha: 1)
+    }
+
     private func addLighting(to scene: SCNScene) {
         let (minimum, maximum) = modelBounds(in: scene)
         let center = SCNVector3(
@@ -362,15 +375,15 @@ final class RoomModelPreviewController: UIViewController, UIGestureRecognizerDel
         let ambient = SCNNode()
         ambient.light = SCNLight()
         ambient.light?.type = .ambient
-        ambient.light?.color = UIColor(white: 0.58, alpha: 1)
-        ambient.light?.intensity = 700
+        ambient.light?.color = UIColor(white: 0.42, alpha: 1)
+        ambient.light?.intensity = 350
         scene.rootNode.addChildNode(ambient)
 
         let key = SCNNode()
         key.light = SCNLight()
         key.light?.type = .omni
         key.light?.color = UIColor(red: 0.86, green: 0.93, blue: 1, alpha: 1)
-        key.light?.intensity = 900
+        key.light?.intensity = 700
         key.light?.castsShadow = true
         key.light?.shadowRadius = 12
         key.light?.shadowSampleCount = 16
@@ -381,7 +394,7 @@ final class RoomModelPreviewController: UIViewController, UIGestureRecognizerDel
         fill.light = SCNLight()
         fill.light?.type = .omni
         fill.light?.color = UIColor(red: 0.82, green: 0.89, blue: 1, alpha: 1)
-        fill.light?.intensity = 700
+        fill.light?.intensity = 450
         fill.position = SCNVector3(center.x - extent, center.y + extent * 0.5, center.z - extent)
         scene.rootNode.addChildNode(fill)
     }

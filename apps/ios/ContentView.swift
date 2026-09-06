@@ -116,11 +116,6 @@ private struct CaptureScreen: View {
                 RoomPlanCaptureCard(viewModel: viewModel)
                 LiveAssistantEntryCard(viewModel: viewModel, onFinish: { onNext() })
 
-                if let evsePose = viewModel.spatialVisuals.evsePose {
-                    ChargerLocationHandoffCard(pose: evsePose)
-                    RoomModelReviewCard(viewModel: viewModel)
-                }
-
                 if let snapshot = viewModel.snapshot,
                    viewModel.realtime.isLevel2EVChargerAssessmentActive || viewModel.spatialVisuals.evsePose != nil || snapshot.measurements.contains(where: { $0.kind == "route_length" }) {
                     CaptureTechnicalDetails(snapshot: snapshot)
@@ -129,83 +124,6 @@ private struct CaptureScreen: View {
         }
         .navigationTitle("Capture")
         .navigationBarTitleDisplayMode(.large)
-    }
-}
-
-private struct ChargerLocationHandoffCard: View {
-    let pose: SpatialModelPose
-
-    private var wallDescription: String {
-        guard let wall = pose.modelRelativeWall else { return "Selected model surface" }
-        return "Model-relative \(wall) wall"
-    }
-
-    var body: some View {
-        DemoCard(title: "Proposed charger location", subtitle: "User-selected model reference", systemImage: "bolt.car.fill") {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(wallDescription)
-                    .font(.title3.weight(.bold))
-
-                HStack(spacing: 10) {
-                    PlacementMetric(
-                        title: "Along wall",
-                        value: pose.alongWallMeters.map(modelFeetString) ?? "Not available"
-                    )
-                    PlacementMetric(
-                        title: "Above model floor",
-                        value: pose.heightAboveModelFloorMeters.map(modelFeetString) ?? "Not available"
-                    )
-                }
-
-                Text("This pin is shown on the scanned room model. It records the chosen reference point only; final mounting height, route, code compliance, and installation approval still require electrician and AHJ review.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
-
-private struct PlacementMetric: View {
-    let title: String
-    let value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title.uppercased())
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.headline.monospacedDigit())
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.siteMist))
-    }
-}
-
-private struct RoomModelReviewCard: View {
-    @ObservedObject var viewModel: SiteGraphDemoViewModel
-    @State private var isPresentingModel = false
-
-    var body: some View {
-        Button {
-            isPresentingModel = true
-        } label: {
-            Label("Review placement on room model", systemImage: "view.3d")
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.bordered)
-        .tint(.siteForest)
-        .sheet(isPresented: $isPresentingModel) {
-            if let modelURL = viewModel.roomModelURL {
-                NavigationStack {
-                    RoomModelQuickLookPreview(modelURL: modelURL, spatialVisuals: viewModel.spatialVisuals)
-                        .ignoresSafeArea(edges: .bottom)
-                        .navigationTitle("Placement review")
-                        .navigationBarTitleDisplayMode(.inline)
-                }
-            }
-        }
     }
 }
 
@@ -271,9 +189,6 @@ private struct ResultsScreen: View {
 
                 if let snapshot = viewModel.snapshot {
                     AssessmentOutcomeCard(assessment: snapshot.finalAssessment)
-                    if let evsePose = viewModel.spatialVisuals.evsePose {
-                        ChargerLocationHandoffCard(pose: evsePose)
-                    }
                     RecommendedChargerCard(snapshot: snapshot)
                     NextStepsCard(assessment: snapshot.finalAssessment)
 
@@ -1041,11 +956,6 @@ private func spacesSummary(_ panel: DemoElectricalPanel) -> String {
 
 private func measurementString(_ measurement: DemoMeasurement) -> String {
     "\(measurement.value.formatted(.number.precision(.fractionLength(0...2)))) \(measurement.unit)"
-}
-
-private func modelFeetString(_ meters: Float) -> String {
-    let feet = Double(meters) * 3.28084
-    return "\(feet.formatted(.number.precision(.fractionLength(1)))) ft"
 }
 
 private func confidenceString(_ confidence: Double?) -> String {

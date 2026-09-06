@@ -924,9 +924,6 @@ struct SpatialModelPose {
     let normalY: Float
     let normalZ: Float
     let surface: String
-    let modelRelativeWall: String?
-    let alongWallMeters: Float?
-    let heightAboveModelFloorMeters: Float?
 }
 
 private struct RealtimeClientSecretRequest: Encodable {
