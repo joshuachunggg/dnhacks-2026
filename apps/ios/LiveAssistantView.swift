@@ -69,7 +69,24 @@ private struct LiveAssistantView: View {
                     modelURL: modelURL,
                     spatialHighlight: realtime.spatialHighlight,
                     placementRequest: realtime.spatialPlacementRequest,
-                    onPoseSelected: { realtime.completeSpatialPlacement($0) }
+                    onPoseSelected: { pose in
+                        guard let request = realtime.spatialPlacementRequest else { return }
+                        Task {
+                            do {
+                                if request.kind == .routePoint {
+                                    if let route = realtime.addRouteWaypoint(pose) {
+                                        try await viewModel.recordRouteWaypoints(route)
+                                        realtime.completeRouteWaypoints(route)
+                                    }
+                                } else {
+                                    try await viewModel.recordSpatialPlacement(pose, request: request)
+                                    realtime.completeSpatialPlacement(pose)
+                                }
+                            } catch {
+                                realtime.spatialPlacementFailed("Could not record that placement: \(error.localizedDescription)")
+                            }
+                        }
+                    }
                 )
                     .ignoresSafeArea()
             } else {
@@ -168,6 +185,28 @@ private struct LiveAssistantView: View {
                         .background(.indigo.opacity(0.65), in: RoundedRectangle(cornerRadius: 14))
                     }
 
+                    if let request = realtime.spatialPlacementRequest {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label("Tap-to-place: \(request.kind.displayName)", systemImage: "hand.tap.fill")
+                                .font(.footnote.weight(.semibold))
+                            Text(request.kind == .routePoint
+                                 ? "Tap the cable route start, then tap its end."
+                                 : request.instruction)
+                                .font(.footnote)
+                        }
+                        .foregroundStyle(.white)
+                        .padding(12)
+                        .background(.indigo.opacity(0.72), in: RoundedRectangle(cornerRadius: 14))
+                    }
+
+                    if viewModel.latestPanelEvidenceId != nil {
+                        PanelFactConfirmationForm(viewModel: viewModel)
+                    }
+
+                    Text("Collected: \(viewModel.collectedSpatialSummary)")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.9))
+
                     if !realtime.isConnected {
                         SecureField("Realtime demo token", text: $viewModel.realtimeDemoToken)
                             .textInputAutocapitalization(.never)
@@ -197,7 +236,7 @@ private struct LiveAssistantView: View {
 
                     HStack(spacing: 12) {
                         if realtime.isConnected {
-                            Button(realtime.isListening ? "Stop talking" : "Talk") {
+                            Button(realtime.isListening ? "Stop talking" : (realtime.isGuideSpeaking ? "Interrupt & talk" : "Talk")) {
                                 realtime.isListening ? realtime.finishListening() : realtime.startListening()
                             }
                             .buttonStyle(.borderedProminent)
@@ -245,6 +284,7 @@ private struct LiveAssistantView: View {
                     imageData: frame.data,
                     rectangleCount: PanelRectangleAnalyzer.rectangleCount(in: frame.image)
                 )
+                camera.clearStatus()
             }
         }
         .onChange(of: selectedEvidencePhoto) { _, photo in
@@ -258,8 +298,50 @@ private struct LiveAssistantView: View {
                     imageData: data,
                     rectangleCount: PanelRectangleAnalyzer.rectangleCount(in: image)
                 )
+                camera.clearStatus()
             }
         }
+    }
+}
+
+private struct PanelFactConfirmationForm: View {
+    @ObservedObject var viewModel: SiteGraphDemoViewModel
+    @State private var serviceAmps = ""
+    @State private var busRatingAmps = ""
+    @State private var spareBreakerSpaces = ""
+    @State private var usingApproximation = false
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Confirm panel facts from the photo").font(.footnote.weight(.semibold))
+            Text("The image is evidence, not a rating. Enter only values you can see and confirm.").font(.caption)
+            HStack {
+                TextField("Service A", text: $serviceAmps).keyboardType(.numberPad)
+                TextField("Bus A (optional)", text: $busRatingAmps).keyboardType(.numberPad)
+                TextField("Spare slots", text: $spareBreakerSpaces).keyboardType(.numberPad)
+            }
+            .textFieldStyle(.roundedBorder)
+            Toggle("Proceed using planning approximations where the label is unreadable", isOn: $usingApproximation)
+                .font(.caption)
+            Button(usingApproximation ? "Proceed with approximations" : "Confirm visible panel facts") {
+                guard let service = Int(serviceAmps), let spare = Int(spareBreakerSpaces) else {
+                    error = "Service amps and spare breaker spaces are required."
+                    return
+                }
+                Task {
+                    do {
+                        try await viewModel.confirmPanelFacts(serviceAmps: service, busRatingAmps: Int(busRatingAmps), spareBreakerSpaces: spare, usingApproximation: usingApproximation)
+                        error = nil
+                    } catch let captureError { self.error = captureError.localizedDescription }
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            if let error { Text(error).font(.caption).foregroundStyle(.red) }
+        }
+        .foregroundStyle(.white)
+        .padding(12)
+        .background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
     }
 }
 
@@ -379,6 +461,8 @@ private final class LiveAssistantCameraController: NSObject, ObservableObject, A
             self.photoOutput.capturePhoto(with: AVCapturePhotoSettings(), delegate: self)
         }
     }
+
+    func clearStatus() { status = nil }
 
     private func configureAndStart() {
         sessionQueue.async { [weak self] in

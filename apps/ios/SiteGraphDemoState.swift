@@ -316,6 +316,8 @@ final class SiteGraphDemoViewModel: ObservableObject {
     @Published private(set) var isUsingFixtureFallback = true
     @Published private(set) var spatialCaptureStatus = "Capture a room to add spatial metadata to the live assessment."
     @Published private(set) var visionStatus = "Capture a panel frame after scanning the room to create reviewable visual evidence."
+    @Published private(set) var latestPanelEvidenceId: String?
+    @Published private(set) var collectedSpatialSummary = "Panel, EVSE, and route locations have not been recorded."
 
     private let fixtureName = "modern-200a"
     private var fixtureData: Data?
@@ -669,11 +671,73 @@ final class SiteGraphDemoViewModel: ObservableObject {
             )
             snapshot = response.assessment
             isUsingFixtureFallback = false
+            latestPanelEvidenceId = evidence.id
             visionStatus = "Panel frame recorded with \(rectangleCount) local Vision rectangle candidate\(rectangleCount == 1 ? "" : "s"). It remains proposed evidence until review."
             realtime.sendPanelImage(imageData)
         } catch {
             visionStatus = "Panel-frame recording failed: \(error.localizedDescription). The fixture fallback remains available."
         }
+    }
+
+    func recordSpatialPlacement(_ pose: SpatialModelPose, request: SpatialPlacementRequest) async throws {
+        guard request.kind != .routePoint,
+              let capture = latestSpatialCapture,
+              let fixtureData,
+              let baseURL = normalizedServerURL,
+              let roomEvidenceId = capture.evidence.first?.id else {
+            throw NSError(domain: "SiteGraphDemo", code: 8, userInfo: [NSLocalizedDescriptionKey: "Save a RoomPlan capture and configure a reachable server before recording a placement."])
+        }
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
+        let payload = SpatialLocationPayload(id: "location-\(request.kind.rawValue)-\(UUID().uuidString.lowercased())", kind: request.kind.rawValue, label: request.label, coordinateSpaceId: capture.coordinateSpaceId, positionMeters: SpatialPosition(x: pose.x, y: pose.y, z: pose.z), surface: pose.surface, evidenceIds: [roomEvidenceId], timestamp: timestamp, producer: "ios-roomplan-placement", assumptions: ["User selected this point on imported RoomPlan model geometry."], notes: [request.instruction])
+        let response: LiveAssessmentResponse = try await send(SpatialCaptureRequestBuilder.eventRequest(baseURL: baseURL, assessmentId: assessmentId, event: SpatialLocationConfirmedEvent(eventId: "event-\(UUID().uuidString.lowercased())", timestamp: timestamp, producer: "ios-roomplan-placement", payload: payload)))
+        snapshot = response.assessment
+        isUsingFixtureFallback = false
+        collectedSpatialSummary = "Recorded \(request.kind.displayName) on the room model."
+    }
+
+    func recordRouteWaypoints(_ poses: [SpatialModelPose]) async throws {
+        guard poses.count >= 2,
+              let capture = latestSpatialCapture,
+              let fixtureData,
+              let baseURL = normalizedServerURL,
+              let roomEvidenceId = capture.evidence.first?.id else {
+            throw NSError(domain: "SiteGraphDemo", code: 9, userInfo: [NSLocalizedDescriptionKey: "Select at least a start and end route point after saving the RoomPlan capture."])
+        }
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
+        let payload = RouteWaypointsPayload(id: "route-\(UUID().uuidString.lowercased())", waypoints: poses.enumerated().map { index, pose in
+            RouteWaypointPayload(id: "waypoint-\(UUID().uuidString.lowercased())", sequence: index, coordinateSpaceId: capture.coordinateSpaceId, positionMeters: SpatialPosition(x: pose.x, y: pose.y, z: pose.z), surface: pose.surface, evidenceIds: [roomEvidenceId], timestamp: timestamp, producer: "ios-roomplan-route", assumptions: ["User selected the cable route on imported RoomPlan model geometry."], notes: [])
+        })
+        let response: LiveAssessmentResponse = try await send(SpatialCaptureRequestBuilder.eventRequest(baseURL: baseURL, assessmentId: assessmentId, event: RouteWaypointsRecordedEvent(eventId: "event-\(UUID().uuidString.lowercased())", timestamp: timestamp, producer: "ios-roomplan-route", payload: payload)))
+        snapshot = response.assessment
+        isUsingFixtureFallback = false
+        collectedSpatialSummary = "Recorded \(poses.count) route waypoints and derived the route length in feet."
+    }
+
+    func confirmPanelFacts(serviceAmps: Int, busRatingAmps: Int?, spareBreakerSpaces: Int, usingApproximation: Bool = false) async throws {
+        guard let evidenceId = latestPanelEvidenceId,
+              let panelId = snapshot?.electricalPanel.id,
+              let fixtureData,
+              let baseURL = normalizedServerURL else {
+            throw NSError(domain: "SiteGraphDemo", code: 10, userInfo: [NSLocalizedDescriptionKey: "Capture and record a panel photo before confirming panel facts."])
+        }
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let provenanceNote = usingApproximation
+            ? "User explicitly chose this planning approximation after the panel image could not verify the value. Professional verification remains required."
+            : "Value confirmed by the user from the panel evidence image."
+        var facts = [
+            PanelFactPayload(id: "panel-service-\(UUID().uuidString.lowercased())", field: "service_amps", value: serviceAmps, unit: "A", evidenceIds: [evidenceId], timestamp: timestamp, producer: "ios-panel-confirmation", notes: [provenanceNote]),
+            PanelFactPayload(id: "panel-spare-\(UUID().uuidString.lowercased())", field: "spare_breaker_spaces", value: spareBreakerSpaces, unit: nil, evidenceIds: [evidenceId], timestamp: timestamp, producer: "ios-panel-confirmation", notes: [provenanceNote]),
+        ]
+        if let busRatingAmps { facts.append(PanelFactPayload(id: "panel-bus-\(UUID().uuidString.lowercased())", field: "bus_rating_amps", value: busRatingAmps, unit: "A", evidenceIds: [evidenceId], timestamp: timestamp, producer: "ios-panel-confirmation", notes: [provenanceNote])) }
+        let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
+        let response: LiveAssessmentResponse = try await send(SpatialCaptureRequestBuilder.eventRequest(baseURL: baseURL, assessmentId: assessmentId, event: PanelFactsConfirmedEvent(eventId: "event-\(UUID().uuidString.lowercased())", timestamp: timestamp, producer: "ios-panel-confirmation", payload: PanelFactsPayload(panelId: panelId, facts: facts))))
+        snapshot = response.assessment
+        isUsingFixtureFallback = false
+        visionStatus = usingApproximation
+            ? "Planning approximations recorded with the panel-image evidence and explicit user consent. Professional verification remains required."
+            : "Panel facts confirmed from the captured image and linked to its evidence."
     }
 
     private func ensureLiveAssessment(baseURL: URL, fixtureData: Data) async throws -> String {

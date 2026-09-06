@@ -45,9 +45,12 @@
 - Added a local-Mac RoomPlan backup slice. After a RoomPlan scan, iOS uploads the USDZ to the configured demo server, verifies the server-calculated byte length and SHA-256 against its phone copy, and then posts the metadata manifest with a `local-mac://` descriptor. The server atomically stores the bytes under ignored `data/spatial-artifacts/` by default (or `SPATIAL_ARTIFACTS_DIR`); it is not agent-readable or production storage.
 - Verified the local HTTP acceptance sequence: create modern fixture → run engineering → run cost. The response contained canonical conditional engineering and cost ToolRuns and the fixture-scoped expected cost of $1,541.99.
 - Pushed commit `2f9811c` to `origin/main`.
+- Added a durable live-assistant collection path: explicit model tap modes persist confirmed panel/EVSE locations and route waypoints before Realtime receives tool output; the server derives feet-based route length from those waypoints.
+- Added the panel-fact confirmation form, explicit user-approved planning approximations, faster Realtime playback, interruption, audio-paced transcript rendering, and transient camera-status cleanup. Simulator and `iphoneos` builds pass; physical-device interaction remains unverified.
+- Replaced RoomPlan auto-start with an explicit Start room scan control and added background-session cleanup/retry state, preventing a delayed scan from requiring an app relaunch. The `iphoneos` build passes; the delayed-start physical-device case remains to be exercised.
 
 ## Current work
-- Validate the server-owned Realtime interview on the installed physical-device build. `LiveAssistantView` directly observes the nested Realtime client, scroll-follows streamed audio transcripts, and delays a typed camera request until the guide's response completes. The shared SceneKit room reference labels model-relative N/E/S/W axes, and the typed Realtime highlight tool can mark a requested general area. Those axes are RoomPlan-model-relative rather than compass-calibrated. The agent does not receive the USDZ or room geometry; it receives typed spatial-reference context and captured images only. Explicit user panel placement remains the next native capture slice.
+- Validate the server-owned Realtime interview on the installed physical-device build. `LiveAssistantView` directly observes the nested Realtime client, scroll-follows audio-paced transcripts, delays a typed camera request until the guide's response completes, and now enters an explicit model tap mode for panel, EVSE, and route selections. The shared SceneKit room reference labels model-relative N/E/S/W axes, and the typed Realtime highlight tool can mark a requested general area. Those axes are RoomPlan-model-relative rather than compass-calibrated. The agent does not receive the USDZ or room geometry; it receives typed spatial-reference context and captured images only.
 - Validate the implemented RoomPlan scan/export/local-Mac-backup/metadata-post path on a physical device. Then add ARKit EVSE anchor/route capture, panel-image evidence, durable artifact uploads, and the guided capture-to-results UX described in [`SPATIAL-CAPTURE.md`](./SPATIAL-CAPTURE.md).
 
 ## Blockers
@@ -63,4 +66,4 @@
 ## Demo readiness
 - Status: partially ready
 - Working: seeded assessment → validated local API → deterministic engineering and cost → native server-result rendering, plus a scripted fixture fallback. The local HTTP path and simulator build are verified.
-- Not ready to claim: ARKit route capture, panel/vision evidence, updated physical-device RoomPlan backup acceptance, production artifact persistence/retrieval, Realtime conversation, or handoff export.
+- Not ready to claim: physical-device acceptance for the new RoomPlan tap/route flow, panel/vision evidence, updated physical-device RoomPlan backup acceptance, production artifact persistence/retrieval, Realtime conversation, or handoff export.

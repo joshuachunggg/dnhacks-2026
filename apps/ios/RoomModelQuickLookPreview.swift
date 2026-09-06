@@ -24,6 +24,7 @@ final class RoomModelPreviewController: UIViewController {
     private weak var sceneView: SCNView?
     private var placementRequest: SpatialPlacementRequest?
     private var onPoseSelected: ((SpatialModelPose) -> Void)?
+    private var selectedPlacementMarker: SCNNode?
 
     init(modelURL: URL) {
         self.modelURL = modelURL
@@ -53,7 +54,9 @@ final class RoomModelPreviewController: UIViewController {
         sceneView.allowsCameraControl = true
         sceneView.autoenablesDefaultLighting = false
         sceneView.antialiasingMode = .multisampling4X
-        sceneView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handlePlacementTap(_:))))
+        let placementTap = UITapGestureRecognizer(target: self, action: #selector(handlePlacementTap(_:)))
+        placementTap.cancelsTouchesInView = false
+        sceneView.addGestureRecognizer(placementTap)
 
         addCamera(to: scene)
         addLighting(to: scene)
@@ -91,14 +94,42 @@ final class RoomModelPreviewController: UIViewController {
     func updatePlacement(request: SpatialPlacementRequest?, onPoseSelected: ((SpatialModelPose) -> Void)?) {
         placementRequest = request
         self.onPoseSelected = onPoseSelected
+        sceneView?.allowsCameraControl = request == nil
     }
 
     @objc private func handlePlacementTap(_ recognizer: UITapGestureRecognizer) {
         guard placementRequest != nil, let sceneView else { return }
-        guard let result = sceneView.hitTest(recognizer.location(in: sceneView), options: [.searchMode: SCNHitTestSearchMode.closest.rawValue]).first else { return }
+        guard let result = sceneView.hitTest(recognizer.location(in: sceneView), options: [.searchMode: SCNHitTestSearchMode.closest.rawValue]).first,
+              isImportedModelNode(result.node) else { return }
         let point = result.worldCoordinates
+        showPlacementMarker(at: point, normal: result.worldNormal)
         onPoseSelected?(SpatialModelPose(x: point.x, y: point.y, z: point.z, surface: abs(result.worldNormal.y) > 0.8 ? "floor" : "wall"))
-        placementRequest = nil
+        if placementRequest?.kind != .routePoint {
+            placementRequest = nil
+            sceneView.allowsCameraControl = true
+        }
+    }
+
+    private func isImportedModelNode(_ node: SCNNode) -> Bool {
+        var current: SCNNode? = node
+        while let candidate = current {
+            if candidate.name?.hasPrefix("spatial-") == true || candidate.name?.hasPrefix("model-reference-") == true || candidate.camera != nil || candidate.light != nil { return false }
+            current = candidate.parent
+        }
+        return true
+    }
+
+    private func showPlacementMarker(at point: SCNVector3, normal: SCNVector3) {
+        selectedPlacementMarker?.removeFromParentNode()
+        let marker = SCNNode(geometry: SCNPlane(width: 0.24, height: 0.24))
+        marker.name = "spatial-placement-marker"
+        marker.geometry?.firstMaterial?.diffuse.contents = UIColor.systemYellow
+        marker.geometry?.firstMaterial?.emission.contents = UIColor.systemYellow
+        marker.geometry?.firstMaterial?.transparency = 0.9
+        marker.position = SCNVector3(point.x + normal.x * 0.006, point.y + normal.y * 0.006, point.z + normal.z * 0.006)
+        marker.look(at: SCNVector3(point.x + normal.x, point.y + normal.y, point.z + normal.z))
+        scene?.rootNode.addChildNode(marker)
+        selectedPlacementMarker = marker
     }
 
     private func addCamera(to scene: SCNScene) {

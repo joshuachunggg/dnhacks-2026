@@ -22,6 +22,59 @@ struct VisualFrameRecordedEvent: Encodable {
     let payload: VisualFramePayload
 }
 
+struct SpatialLocationConfirmedEvent: Encodable {
+    let eventId: String
+    let eventName = "spatial.location.confirmed"
+    let timestamp: String
+    let producer: String
+    let schemaVersion = "0.1.0"
+    let payload: SpatialLocationPayload
+}
+
+struct RouteWaypointsRecordedEvent: Encodable {
+    let eventId: String
+    let eventName = "route.waypoints.recorded"
+    let timestamp: String
+    let producer: String
+    let schemaVersion = "0.1.0"
+    let payload: RouteWaypointsPayload
+}
+
+struct PanelFactsConfirmedEvent: Encodable {
+    let eventId: String
+    let eventName = "panel.facts.confirmed"
+    let timestamp: String
+    let producer: String
+    let schemaVersion = "0.1.0"
+    let payload: PanelFactsPayload
+}
+
+struct SpatialPosition: Encodable { let x: Float; let y: Float; let z: Float }
+
+struct SpatialLocationPayload: Encodable {
+    let id: String; let kind: String; let label: String; let coordinateSpaceId: String
+    let positionMeters: SpatialPosition; let surface: String
+    let status = "confirmed"; let sourceType = "measured"; let evidenceIds: [String]
+    let timestamp: String; let producer: String; let assumptions: [String]; let notes: [String]
+}
+
+struct RouteWaypointPayload: Encodable {
+    let id: String; let sequence: Int; let coordinateSpaceId: String
+    let positionMeters: SpatialPosition; let surface: String
+    let status = "confirmed"; let sourceType = "measured"; let evidenceIds: [String]
+    let timestamp: String; let producer: String; let assumptions: [String]; let notes: [String]
+}
+
+struct RouteWaypointsPayload: Encodable { let id: String; let waypoints: [RouteWaypointPayload] }
+
+struct PanelFactPayload: Encodable {
+    let id: String; let field: String; let value: Int; let unit: String?
+    let status = "confirmed"; let sourceType = "user_supplied"; let evidenceIds: [String]
+    let timestamp: String; let producer: String; let notes: [String]
+}
+
+struct PanelFactsPayload: Encodable { let panelId: String; let facts: [PanelFactPayload] }
+
 struct SpatialCapturePayload: Codable {
     let id: String
     let kind: String

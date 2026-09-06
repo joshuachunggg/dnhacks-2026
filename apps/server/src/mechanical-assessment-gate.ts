@@ -22,6 +22,7 @@ export const MechanicalAssessmentGateResultSchema = z.discriminatedUnion('status
     status: z.literal('ready'),
     nextAction: z.literal('finish_and_review'),
     result: z.unknown(),
+    planningOnly: z.boolean(),
   }).strict(),
 ]);
 
@@ -34,6 +35,7 @@ export type MechanicalAssessmentGateResult = {
   status: 'ready';
   nextAction: 'finish_and_review';
   result: EngineeringScenarioResult;
+  planningOnly: boolean;
 };
 
 function evidenceExists(graph: SiteGraphV0, evidenceIds: string[]): boolean {
@@ -91,5 +93,6 @@ export function evaluateMechanicalAssessmentGate(
   if (result.status === 'insufficient_data') {
     return { status: 'needs_input', nextAction: 'confirm_panel_facts', message: result.installerHandoff.bullets[0] ?? 'Confirm the required panel facts from the evidence image.' };
   }
-  return { status: 'ready', nextAction: 'finish_and_review', result };
+  const planningOnly = graph.panelFactConfirmations.some((fact) => fact.notes.some((note) => note.includes('planning approximation')));
+  return { status: 'ready', nextAction: 'finish_and_review', result, planningOnly };
 }

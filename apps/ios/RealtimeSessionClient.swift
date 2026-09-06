@@ -12,9 +12,11 @@ final class RealtimeSessionClient: NSObject, ObservableObject {
     @Published private(set) var spatialHighlight: SpatialHighlight?
     @Published private(set) var spatialPlacementRequest: SpatialPlacementRequest?
     @Published private(set) var isLevel2EVChargerAssessmentActive = false
+    @Published private(set) var isGuideSpeaking = false
 
     private let audioEngine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
+    private let playbackRateNode = AVAudioUnitTimePitch()
     private let realtimeAudioFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 24_000, channels: 1, interleaved: true)!
     private var inputConverter: AVAudioConverter?
     private var webSocket: URLSessionWebSocketTask?
@@ -22,11 +24,16 @@ final class RealtimeSessionClient: NSObject, ObservableObject {
     private var pendingSpatialPlacementRequest: SpatialPlacementRequest?
     private var activeServerBaseURL: URL?
     private var activeAssessmentId: String?
+    private var routePoses: [SpatialModelPose] = []
+    private var pendingTranscript = ""
 
     override init() {
         super.init()
         audioEngine.attach(playerNode)
-        audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: realtimeAudioFormat)
+        playbackRateNode.rate = 1.15
+        audioEngine.attach(playbackRateNode)
+        audioEngine.connect(playerNode, to: playbackRateNode, format: realtimeAudioFormat)
+        audioEngine.connect(playbackRateNode, to: audioEngine.mainMixerNode, format: realtimeAudioFormat)
     }
 
     func connect(
@@ -80,6 +87,9 @@ final class RealtimeSessionClient: NSObject, ObservableObject {
         pendingSpatialPlacementRequest = nil
         activeServerBaseURL = nil
         activeAssessmentId = nil
+        routePoses = []
+        pendingTranscript = ""
+        isGuideSpeaking = false
         isLevel2EVChargerAssessmentActive = false
         status = "Disconnected"
     }
@@ -90,6 +100,7 @@ final class RealtimeSessionClient: NSObject, ObservableObject {
             return
         }
         guard !isListening else { return }
+        interruptGuide()
         isListening = true
         status = "Listening now. Tap Stop talking when you finish your question."
         beginAudioTurn()
@@ -179,6 +190,36 @@ final class RealtimeSessionClient: NSObject, ObservableObject {
         status = "Spatial placement shared with the guide as a proposed model reference."
     }
 
+    func addRouteWaypoint(_ pose: SpatialModelPose) -> [SpatialModelPose]? {
+        routePoses.append(pose)
+        if routePoses.count < 2 {
+            status = "Route start recorded. Tap the route end point, or an intermediate bend."
+            return nil
+        }
+        let poses = routePoses
+        routePoses = []
+        return poses
+    }
+
+    func completeRouteWaypoints(_ poses: [SpatialModelPose]) {
+        guard let request = spatialPlacementRequest else { return }
+        sendEvent(["type": "conversation.item.create", "item": ["type": "function_call_output", "call_id": request.callId, "output": "{\"recorded\":true,\"waypointCount\":\(poses.count)}"]])
+        spatialPlacementRequest = nil
+        requestResponse()
+        status = "Route waypoints were recorded and converted to a feet-based route measurement."
+    }
+
+    func spatialPlacementFailed(_ message: String) { status = message }
+
+    func interruptGuide() {
+        guard isGuideSpeaking else { return }
+        sendEvent(["type": "response.cancel"])
+        playerNode.stop()
+        pendingTranscript = ""
+        isGuideSpeaking = false
+        status = "Guide interrupted."
+    }
+
     private func beginAudioTurn() {
         do {
             try configureRealtimeAudioSession()
@@ -231,6 +272,7 @@ final class RealtimeSessionClient: NSObject, ObservableObject {
 
     private func requestResponse(requiringTool toolName: String? = nil) {
         responseText = ""
+        pendingTranscript = ""
         var response: [String: Any] = [:]
         if let toolName {
             response["tool_choice"] = [
@@ -334,7 +376,7 @@ final class RealtimeSessionClient: NSObject, ObservableObject {
                 ],
             ])
         case "response.output_audio_transcript.delta", "response.output_text.delta":
-            responseText += event["delta"] as? String ?? ""
+            pendingTranscript += event["delta"] as? String ?? ""
         case "response.function_call_arguments.done":
             guard let name = event["name"] as? String, let callId = event["call_id"] as? String else {
                 status = "The guide sent an invalid tool request."
@@ -428,6 +470,11 @@ final class RealtimeSessionClient: NSObject, ObservableObject {
                 status = "The guide needs a \(evidencePhotoRequest?.evidenceKind.displayName ?? "") photo."
                 return
             }
+            if !pendingTranscript.isEmpty {
+                responseText += pendingTranscript
+                pendingTranscript = ""
+            }
+            isGuideSpeaking = false
             status = "Guide response ready."
         case "error":
             status = "Realtime error: \((event["error"] as? [String: Any])?["message"] as? String ?? "unknown error")"
@@ -455,6 +502,16 @@ final class RealtimeSessionClient: NSObject, ObservableObject {
         }
         if !playerNode.isPlaying { playerNode.play() }
         playerNode.scheduleBuffer(buffer)
+        isGuideSpeaking = true
+        drainTranscript(for: Double(frameCount) / realtimeAudioFormat.sampleRate)
+    }
+
+    private func drainTranscript(for audioSeconds: Double) {
+        guard !pendingTranscript.isEmpty else { return }
+        let count = min(pendingTranscript.count, max(1, Int((audioSeconds * 18).rounded(.up))))
+        let end = pendingTranscript.index(pendingTranscript.startIndex, offsetBy: count)
+        responseText += String(pendingTranscript[..<end])
+        pendingTranscript.removeSubrange(..<end)
     }
 
     private func mintClientSecret(
