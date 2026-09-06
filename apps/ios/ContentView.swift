@@ -11,7 +11,7 @@ struct ContentView: View {
                 SiteScreen(viewModel: viewModel, onNext: { selectedStep = 1 })
             }
             .tabItem {
-                Label("1 Start", systemImage: "house")
+                Label("Start", systemImage: "house.fill")
             }
             .tag(0)
 
@@ -19,7 +19,7 @@ struct ContentView: View {
                 CaptureScreen(viewModel: viewModel, onNext: { selectedStep = 2 })
             }
             .tabItem {
-                Label("2 Capture", systemImage: "view.3d")
+                Label("Capture", systemImage: "view.3d")
             }
             .tag(1)
 
@@ -27,11 +27,13 @@ struct ContentView: View {
                 ResultsScreen(viewModel: viewModel)
             }
             .tabItem {
-                Label("3 Results", systemImage: "checkmark.seal.fill")
+                Label("Results", systemImage: "checkmark.seal.fill")
             }
             .tag(2)
         }
-        .tint(.indigo)
+        .tint(.siteForest)
+        .toolbarBackground(Color(.systemBackground), for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
 }
 
@@ -45,45 +47,55 @@ private struct SiteScreen: View {
                 AssessmentStepCard(
                     step: 1,
                     title: "Start the assessment",
-                    instruction: "Enter the property address or load the explicit demo fixture. Then scan the relevant room or garage.",
+                    instruction: "Enter the property address, then scan the relevant room or garage.",
                     nextTitle: "Next: scan space",
                     onNext: onNext
                 )
-                DemoActionCard(viewModel: viewModel)
 
                 if viewModel.snapshot == nil {
                     PropertyAddressCard(viewModel: viewModel)
                 }
 
                 if let snapshot = viewModel.snapshot {
-                    DemoCard(title: "Site", subtitle: viewModel.isUsingFixtureFallback ? snapshot.sourceSummary : "Server-returned assessment after deterministic tool runs", systemImage: "house.fill") {
-                        VStack(spacing: 12) {
-                            FactRow(title: "Assessment ID", value: snapshot.assessmentId, provenance: viewModel.isUsingFixtureFallback ? "fixture boundary" : "server-returned assessment", evidence: viewModel.isUsingFixtureFallback ? "modern-200a.json" : "create → engineering → cost tool responses")
-                            FactRow(title: "Site label", value: snapshot.site.label, provenance: "user-facing site identity", evidence: snapshot.site.id)
-                            FactRow(title: "Address", value: snapshot.site.address, provenance: "seeded demo address", evidence: "loaded from fixture")
-                            FactRow(title: "Jurisdiction", value: "\(snapshot.site.jurisdiction.ahj), \(snapshot.site.jurisdiction.city), \(snapshot.site.jurisdiction.state)", provenance: "jurisdictional fixture", evidence: "\(snapshot.site.jurisdiction.county) County")
-                            FactRow(title: "Utility", value: snapshot.site.utility ?? "Unknown", provenance: "source-backed demo field", evidence: "site record")
+                    DemoCard(title: "Assessment site", subtitle: "Details for this assessment", systemImage: "house.fill") {
+                        VStack(spacing: 14) {
+                            SiteDetailRow(title: "Address", value: snapshot.site.address, systemImage: "mappin.and.ellipse")
+                            SiteDetailRow(title: "Jurisdiction", value: "\(snapshot.site.jurisdiction.ahj), \(snapshot.site.jurisdiction.city), \(snapshot.site.jurisdiction.state)", systemImage: "building.2")
+                            SiteDetailRow(title: "Utility", value: snapshot.site.utility ?? "To be confirmed", systemImage: "bolt.fill")
                         }
-                    }
-
-                    DemoCard(title: "What this screen proves", subtitle: "Visible provenance and story state", systemImage: "eye.fill") {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Label("The app is reading structured fixture data, not hardcoded labels.", systemImage: "checkmark.circle.fill")
-                            Label("Each major fact is tagged with a source type and evidence reference.", systemImage: "checkmark.circle.fill")
-                            Label("The seeded assessment is ready to be reset and reloaded on demand.", systemImage: "checkmark.circle.fill")
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(.primary)
                     }
                 } else {
                     DemoEmptyState(
                         title: viewModel.loadError == nil ? "Start a property assessment" : "Assessment start failed",
-                        message: viewModel.loadError ?? "Enter the property address to start with a blank assessment, or load the demo fixture explicitly."
+                        message: viewModel.loadError ?? "Enter the property address to begin."
                     )
                 }
             }
         }
-        .navigationTitle("1. Start")
+        .navigationTitle("Start")
+        .navigationBarTitleDisplayMode(.large)
+    }
+}
+
+private struct SiteDetailRow: View {
+    let title: String
+    let value: String
+    let systemImage: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: systemImage)
+                .foregroundStyle(Color.siteForest)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.subheadline)
+            }
+            Spacer(minLength: 0)
+        }
     }
 }
 
@@ -101,37 +113,135 @@ private struct CaptureScreen: View {
                     nextTitle: "Next: review results",
                     onNext: onNext
                 )
-                DemoActionCard(viewModel: viewModel)
                 RoomPlanCaptureCard(viewModel: viewModel)
                 LiveAssistantEntryCard(viewModel: viewModel, onFinish: { onNext() })
 
-                if let snapshot = viewModel.snapshot, viewModel.realtime.isLevel2EVChargerAssessmentActive {
-                    DemoCard(title: "Charger location", subtitle: "Proposed EVSE mount point", systemImage: "location.fill") {
-                        VStack(spacing: 12) {
-                            FactRow(title: "Proposed wall", value: snapshot.proposedEvseLocation.wall, provenance: snapshot.proposedEvseLocation.status.displayName, evidence: evidenceList(snapshot.proposedEvseLocation.evidenceIds))
-                            FactRow(title: "Location label", value: snapshot.proposedEvseLocation.label, provenance: snapshot.proposedEvseLocation.sourceType.displayName, evidence: snapshot.proposedEvseLocation.id)
-                            FactRow(title: "Confidence", value: confidenceString(snapshot.proposedEvseLocation.confidence), provenance: "seeded user confirmation", evidence: snapshot.proposedEvseLocation.timestamp)
-                        }
-                    }
+                if let evsePose = viewModel.spatialVisuals.evsePose {
+                    ChargerLocationHandoffCard(pose: evsePose)
+                    RoomModelReviewCard(viewModel: viewModel)
+                }
 
-                    DemoCard(title: "Route estimate", subtitle: "Typed measurement state", systemImage: "ruler") {
-                        VStack(spacing: 12) {
-                            if let route = snapshot.measurements.first(where: { $0.kind == "route_length" }) {
-                                FactRow(title: "Route length", value: measurementString(route), provenance: route.sourceType.displayName, evidence: evidenceList(route.evidenceIds))
-                                FactRow(title: "Measurement status", value: route.status.displayName, provenance: route.producer, evidence: route.assumptions.first ?? "No assumptions recorded")
-                            }
-                        }
-                    }
-
-                    DemoCard(title: "Charger story", subtitle: "What the user can explain in one sentence", systemImage: "quote.bubble") {
-                        Text("The proposed charger position is pinned to the garage west wall, the route estimate is stored as typed state, and the location remains linked to seeded evidence instead of transcript-only memory.")
-                            .font(.subheadline)
-                            .foregroundStyle(.primary)
-                    }
+                if let snapshot = viewModel.snapshot,
+                   viewModel.realtime.isLevel2EVChargerAssessmentActive || viewModel.spatialVisuals.evsePose != nil || snapshot.measurements.contains(where: { $0.kind == "route_length" }) {
+                    CaptureTechnicalDetails(snapshot: snapshot)
                 }
             }
         }
-        .navigationTitle("2. Capture")
+        .navigationTitle("Capture")
+        .navigationBarTitleDisplayMode(.large)
+    }
+}
+
+private struct ChargerLocationHandoffCard: View {
+    let pose: SpatialModelPose
+
+    private var wallDescription: String {
+        guard let wall = pose.modelRelativeWall else { return "Selected model surface" }
+        return "Model-relative \(wall) wall"
+    }
+
+    var body: some View {
+        DemoCard(title: "Proposed charger location", subtitle: "User-selected model reference", systemImage: "bolt.car.fill") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(wallDescription)
+                    .font(.title3.weight(.bold))
+
+                HStack(spacing: 10) {
+                    PlacementMetric(
+                        title: "Along wall",
+                        value: pose.alongWallMeters.map(modelFeetString) ?? "Not available"
+                    )
+                    PlacementMetric(
+                        title: "Above model floor",
+                        value: pose.heightAboveModelFloorMeters.map(modelFeetString) ?? "Not available"
+                    )
+                }
+
+                Text("This pin is shown on the scanned room model. It records the chosen reference point only; final mounting height, route, code compliance, and installation approval still require electrician and AHJ review.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+private struct PlacementMetric: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title.uppercased())
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.headline.monospacedDigit())
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.siteMist))
+    }
+}
+
+private struct RoomModelReviewCard: View {
+    @ObservedObject var viewModel: SiteGraphDemoViewModel
+    @State private var isPresentingModel = false
+
+    var body: some View {
+        Button {
+            isPresentingModel = true
+        } label: {
+            Label("Review placement on room model", systemImage: "view.3d")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .tint(.siteForest)
+        .sheet(isPresented: $isPresentingModel) {
+            if let modelURL = viewModel.roomModelURL {
+                NavigationStack {
+                    RoomModelQuickLookPreview(modelURL: modelURL, spatialVisuals: viewModel.spatialVisuals)
+                        .ignoresSafeArea(edges: .bottom)
+                        .navigationTitle("Placement review")
+                        .navigationBarTitleDisplayMode(.inline)
+                }
+            }
+        }
+    }
+}
+
+private struct CaptureTechnicalDetails: View {
+    let snapshot: SiteGraphDemoSnapshot
+
+    var body: some View {
+        DisclosureGroup {
+            VStack(alignment: .leading, spacing: 14) {
+                FactRow(
+                    title: "Recorded EVSE label",
+                    value: snapshot.proposedEvseLocation.label,
+                    provenance: snapshot.proposedEvseLocation.sourceType.displayName,
+                    evidence: evidenceList(snapshot.proposedEvseLocation.evidenceIds)
+                )
+                if let route = snapshot.measurements.first(where: { $0.kind == "route_length" }) {
+                    FactRow(
+                        title: "Route length",
+                        value: measurementString(route),
+                        provenance: "\(route.status.displayName) · \(route.sourceType.displayName)",
+                        evidence: evidenceList(route.evidenceIds)
+                    )
+                    Text("The route length is used as a planning input for the route-dependent installation allowance. It does not establish final electrical scope or price.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.top, 12)
+        } label: {
+            Label("Capture details", systemImage: "info.circle")
+                .font(.headline)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color(.secondarySystemBackground)))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.siteBorder))
     }
 }
 
@@ -144,65 +254,28 @@ private struct ResultsScreen: View {
                 AssessmentStepCard(
                     step: 3,
                     title: "Review the handoff",
-                    instruction: "Compare the deterministic options, inspect the cost status, and identify what the electrician still needs to verify."
+                    instruction: "See the recommended next step, then share the clear handoff with an electrician."
                 )
-                DemoActionCard(viewModel: viewModel)
+
+                if let roomExpansionSummary = viewModel.realtime.roomExpansionSummary {
+                    DemoCard(title: "Adjacent-room expansion", subtitle: "Conceptual scan visualization", systemImage: "rectangle.3.group") {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(roomExpansionSummary)
+                                .font(.subheadline)
+                            Text("The highlighted opening is a user-selected concept on the captured model. It is not a structural finding, demolition instruction, permit approval, or feasibility conclusion.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
 
                 if let snapshot = viewModel.snapshot {
-                    DemoCard(title: "Assessment result", subtitle: snapshot.finalAssessment.status.displayName, systemImage: "checkmark.seal.fill") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            StatusBadge(status: snapshot.finalAssessment.status)
-                            Text(snapshot.finalAssessment.summary)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                        }
+                    AssessmentOutcomeCard(assessment: snapshot.finalAssessment)
+                    if let evsePose = viewModel.spatialVisuals.evsePose {
+                        ChargerLocationHandoffCard(pose: evsePose)
                     }
-
-                    DemoCard(title: "Open items", subtitle: "What still needs operator or electrician confirmation", systemImage: "exclamationmark.triangle.fill") {
-                        VStack(alignment: .leading, spacing: 10) {
-                            ForEach(snapshot.finalAssessment.unresolvedRequirements, id: \.self) { item in
-                                Label(item, systemImage: "questionmark.circle.fill")
-                            }
-                            ForEach(snapshot.finalAssessment.professionalVerificationItems, id: \.self) { item in
-                                Label(item, systemImage: "person.crop.circle.badge.checkmark")
-                            }
-                        }
-                        .font(.subheadline)
-                    }
-
-                    EngineeringRunStatusCard(viewModel: viewModel)
-
-                    DemoCard(title: "Tool run provenance", subtitle: "Server-returned deterministic engineering and cost tools", systemImage: "wrench.and.screwdriver.fill") {
-                        VStack(spacing: 12) {
-                            ForEach(snapshot.toolRuns) { toolRun in
-                                ToolRunRow(toolRun: toolRun)
-                            }
-                        }
-                    }
-
-                    DemoCard(title: "Engineering scenarios", subtitle: "Server-returned scenarios; no electrical calculation runs on this device", systemImage: "slider.horizontal.3") {
-                        VStack(spacing: 12) {
-                            ForEach(snapshot.engineeringScenarios) { scenario in
-                                VStack(alignment: .leading, spacing: 6) {
-                                    HStack(alignment: .firstTextBaseline) {
-                                        Text(scenario.label)
-                                            .font(.subheadline.weight(.semibold))
-                                        Spacer()
-                                        ScenarioBadge(text: scenario.status)
-                                    }
-                                    Text(scenario.resultSummary)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                    if !scenario.requirements.isEmpty {
-                                        Text("Requirements: \(scenario.requirements.joined(separator: ", "))")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                .padding(.vertical, 4)
-                            }
-                        }
-                    }
+                    RecommendedChargerCard(snapshot: snapshot)
+                    NextStepsCard(assessment: snapshot.finalAssessment)
 
                     CostResultsCard(
                         cost: snapshot.costScenarios.first,
@@ -218,15 +291,179 @@ private struct ResultsScreen: View {
                             }
                         }
                     }
+
+                    ResultsTechnicalDetails(snapshot: snapshot, viewModel: viewModel)
+                    StartNewAssessmentButton(viewModel: viewModel)
                 } else {
                     DemoEmptyState(
-                        title: viewModel.loadError == nil ? "No results yet" : "Fixture load failed",
-                        message: viewModel.loadError ?? "Reload the demo to show the assessment outcome, scenario comparison, and installer handoff."
+                        title: viewModel.loadError == nil ? "No results yet" : "Assessment unavailable",
+                        message: viewModel.loadError ?? "Complete the capture and assessment steps to see the outcome and installer handoff."
                     )
                 }
             }
         }
-        .navigationTitle("4. Results")
+        .navigationTitle("Results")
+        .navigationBarTitleDisplayMode(.large)
+    }
+}
+
+private struct AssessmentOutcomeCard: View {
+    let assessment: DemoFinalAssessment
+
+    private var headline: String {
+        switch assessment.status {
+        case .pass: return "An option is ready for electrician confirmation"
+        case .conditional: return "A charger looks plausible — verify before installing"
+        case .insufficientData: return "More information is needed before choosing a charger"
+        case .professionalVerificationRequired: return "An electrician needs to review this assessment"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Label("YOUR ASSESSMENT", systemImage: "bolt.car.fill")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color.siteForest)
+                Spacer()
+                StatusBadge(status: assessment.status)
+            }
+            Text(headline)
+                .font(.title2.weight(.bold))
+                .fixedSize(horizontal: false, vertical: true)
+            Text(assessment.summary)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(colors: [Color.siteSage, Color.siteMist], startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        )
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.siteForest.opacity(0.16)))
+    }
+}
+
+private struct RecommendedChargerCard: View {
+    let snapshot: SiteGraphDemoSnapshot
+
+    private var recommendedScenario: DemoEngineeringScenario? {
+        let recommendedLabel = snapshot.toolRuns.last?.output["recommendedScenario"]?.stringValue
+        return snapshot.engineeringScenarios.first(where: { $0.label == recommendedLabel })
+            ?? snapshot.engineeringScenarios.first(where: { $0.status == "pass" })
+    }
+
+    var body: some View {
+        if let scenario = recommendedScenario {
+            DemoCard(title: "Best current option", subtitle: "Preliminary recommendation", systemImage: "bolt.fill") {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(scenario.label).font(.title3.weight(.bold))
+                        Spacer()
+                        ScenarioBadge(text: scenario.status)
+                    }
+                    Text(scenario.resultSummary)
+                        .font(.subheadline)
+                    if !scenario.requirements.isEmpty {
+                        Text("Still required: \(scenario.requirements.joined(separator: " "))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct NextStepsCard: View {
+    let assessment: DemoFinalAssessment
+
+    var body: some View {
+        DemoCard(title: "What to do next", subtitle: "No installation approval is implied", systemImage: "arrow.right.circle.fill") {
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(assessment.unresolvedRequirements, id: \.self) { item in
+                    NextStepRow(item: item, systemImage: "checkmark.circle")
+                }
+                ForEach(assessment.professionalVerificationItems, id: \.self) { item in
+                    NextStepRow(item: item, systemImage: "person.crop.circle.badge.checkmark")
+                }
+            }
+        }
+    }
+}
+
+private struct NextStepRow: View {
+    let item: String
+    let systemImage: String
+
+    var body: some View {
+        Label {
+            Text(item).font(.subheadline)
+        } icon: {
+            Image(systemName: systemImage).foregroundStyle(Color.siteForest)
+        }
+    }
+}
+
+private struct ResultsTechnicalDetails: View {
+    let snapshot: SiteGraphDemoSnapshot
+    @ObservedObject var viewModel: SiteGraphDemoViewModel
+
+    var body: some View {
+        DisclosureGroup {
+            VStack(alignment: .leading, spacing: 16) {
+                EngineeringRunStatusCard(viewModel: viewModel)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Engineering scenarios").font(.subheadline.weight(.semibold))
+                    ForEach(snapshot.engineeringScenarios) { scenario in
+                        EngineeringScenarioDetail(scenario: scenario)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Tool runs and evidence").font(.subheadline.weight(.semibold))
+                    ForEach(snapshot.toolRuns) { toolRun in
+                        ToolRunRow(toolRun: toolRun)
+                    }
+                }
+            }
+            .padding(.top, 12)
+        } label: {
+            Label("Technical details", systemImage: "chevron.left.forwardslash.chevron.right")
+                .font(.headline)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color(.secondarySystemBackground)))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.siteBorder))
+    }
+}
+
+private struct EngineeringScenarioDetail: View {
+    let scenario: DemoEngineeringScenario
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(scenario.label).font(.subheadline.weight(.semibold))
+                Spacer()
+                ScenarioBadge(text: scenario.status)
+            }
+            Text(scenario.resultSummary)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            if !scenario.requirements.isEmpty {
+                Text("Requirements: \(scenario.requirements.joined(separator: ", "))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Text("Evidence: \(evidenceList(scenario.evidenceIds)) · \(scenario.timestamp)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(.tertiarySystemBackground)))
     }
 }
 
@@ -252,7 +489,13 @@ private struct AssessmentScrollContainer<Content: View>: View {
                 .padding(.bottom, 96)
         }
         .scrollIndicators(.hidden)
-        .background(Color(.systemGroupedBackground))
+        .background(
+            LinearGradient(
+                colors: [.siteCanvas, Color(.systemGroupedBackground)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
     }
 }
 
@@ -274,90 +517,101 @@ private struct CostResultsCard: View {
 
     var body: some View {
         DemoCard(title: "Cost result", subtitle: status.subtitle, systemImage: "dollarsign.circle.fill") {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    ScenarioBadge(text: status.rawValue)
-                    Spacer()
-                    if let toolRun {
-                        Text("Server tool · \(toolRun.timestamp)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("Bundled fixture")
+            VStack(alignment: .leading, spacing: 14) {
+                if let cost, status.showsNumericRange {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("TOTAL PLANNING RANGE")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Color.siteForest)
+                        Text(rangeString(low: cost.totalLow, expected: cost.totalExpected, high: cost.totalHigh, currency: cost.currency))
+                            .font(.title3.weight(.bold).monospacedDigit())
+                        Text("Planning range only — not an installer quote. Final scope and price require electrician and AHJ review.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                }
-
-                Text(status.explanation)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-
-                if let cost, status.showsNumericRange {
-                    Text(rangeString(low: cost.totalLow, expected: cost.totalExpected, high: cost.totalHigh, currency: cost.currency))
-                        .font(.headline)
-                    Text("Planning range only; not an installer quote.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
 
                     ForEach(cost.lineItems) { item in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(item.label)
-                                    .font(.subheadline.weight(.semibold))
-                                Spacer()
-                                Text(rangeString(low: item.low, expected: item.expected, high: item.high, currency: item.currency))
-                                    .font(.footnote.monospacedDigit())
+                        CostLineItemRow(item: item)
+                    }
+
+                    DisclosureGroup("Cost details") {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(status.explanation)
+                            if !cost.assumptions.isEmpty {
+                                Text("Assessment assumptions: \(cost.assumptions.joined(separator: " "))")
                             }
-                            Text("\(quantityString(item.quantity)) \(item.unit) · source: \(item.source)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            if !item.assumptions.isEmpty {
-                                Text("Assumptions: \(item.assumptions.joined(separator: " "))")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                            if let toolRun, !toolRun.warnings.isEmpty {
+                                ForEach(toolRun.warnings, id: \.self) { warning in
+                                    Text(warning)
+                                }
                             }
                         }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
                     }
-                    if !cost.assumptions.isEmpty {
-                        Text("Cost assumptions: \(cost.assumptions.joined(separator: " "))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if status == .insufficientData {
-                    Text("No numeric cost is available.")
+                    .font(.subheadline.weight(.semibold))
+                } else if status == .insufficientData {
+                    Text("No numeric cost is available yet.")
                         .font(.headline)
                     ForEach(missingInputs, id: \.self) { item in
                         Label(item, systemImage: "questionmark.circle.fill")
                             .font(.subheadline)
                     }
-                }
-
-                if let toolRun, !toolRun.warnings.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Cost disclaimer")
-                            .font(.subheadline.weight(.semibold))
-                        ForEach(toolRun.warnings, id: \.self) { warning in
-                            Text(warning)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                } else if isUsingFixtureFallback {
-                    Text("Cost disclaimer: bundled fixture values are demo planning data, not an installer quote.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                if let toolRun {
-                    Text("Cost provenance · evidence: \(evidenceList(toolRun.evidenceIds))")
-                        .font(.caption)
+                } else {
+                    Text(status.explanation)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
             }
         }
+    }
+}
+
+private struct CostLineItemRow: View {
+    let item: DemoCostLineItem
+
+    private var mainFactor: String {
+        let label = item.label.lowercased()
+        if label.contains("route") || label.contains("conduit") || label.contains("wire") {
+            return "Route length and access"
+        }
+        if label.contains("panel") || label.contains("breaker") || label.contains("service") {
+            return "Panel capacity and available space"
+        }
+        if label.contains("permit") || label.contains("inspection") {
+            return "Local permit and inspection requirements"
+        }
+        return "Site conditions and installation scope"
+    }
+
+    var body: some View {
+        DisclosureGroup {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("\(quantityString(item.quantity)) \(item.unit) · \(item.source)")
+                if !item.assumptions.isEmpty {
+                    Text(item.assumptions.joined(separator: " "))
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding(.top, 6)
+        } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(item.label)
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Text(rangeString(low: item.low, expected: item.expected, high: item.high, currency: item.currency))
+                        .font(.footnote.monospacedDigit())
+                }
+                Text("Main factor: \(mainFactor)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.siteMist))
     }
 }
 
@@ -398,32 +652,39 @@ private enum CostPresentationStatus: String {
     }
 }
 
-private struct DemoActionCard: View {
+private struct StartNewAssessmentButton: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
     var body: some View {
-        Button(action: viewModel.toggleDemoFixture) {
+        Button(action: viewModel.startNewAssessment) {
             HStack(alignment: .center, spacing: 12) {
                 Image(systemName: "arrow.counterclockwise")
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(.white)
                     .frame(width: 32, height: 32)
-                    .background(Circle().fill(Color.indigo.opacity(0.12)))
+                    .background(Circle().fill(.white.opacity(0.16)))
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(viewModel.actionTitle)
+                    Text("Start a new assessment")
                         .font(.headline)
-                        .foregroundStyle(.primary)
-                    Text(viewModel.actionSubtitle)
+                        .foregroundStyle(.white)
+                    Text("Clear this assessment and return to the property address step.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white.opacity(0.76))
                 }
 
                 Spacer()
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color(.secondarySystemBackground)))
+            .background(
+                LinearGradient(
+                    colors: [.siteForest, .siteForest.opacity(0.86)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -441,10 +702,10 @@ private struct AssessmentStepCard: View {
             HStack(alignment: .center, spacing: 10) {
                 Text("STEP \(step) OF 3")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(Color.siteForest)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 10)
-                    .background(Capsule().fill(Color.indigo.opacity(0.12)))
+                    .background(Capsule().fill(Color.siteSage))
                 Spacer()
                 if step < 3 {
                     Text("Complete in order")
@@ -463,11 +724,13 @@ private struct AssessmentStepCard: View {
                 Button(nextTitle, action: onNext)
                     .buttonStyle(.borderedProminent)
                     .controlSize(.regular)
+                    .tint(.siteForest)
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.indigo.opacity(0.08)))
+        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.siteMist))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.siteForest.opacity(0.12)))
     }
 }
 
@@ -612,8 +875,10 @@ private struct DemoCard<Content: View>: View {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: systemImage)
                     .font(.headline)
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(Color.siteForest)
                     .frame(width: 22)
+                    .padding(9)
+                    .background(Color.siteSage, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.headline)
@@ -630,7 +895,9 @@ private struct DemoCard<Content: View>: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color(.secondarySystemBackground)))
+        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color(.secondarySystemBackground)))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.siteBorder))
+        .shadow(color: .black.opacity(0.035), radius: 10, y: 4)
     }
 }
 
@@ -639,7 +906,7 @@ private struct DemoEmptyState: View {
     let message: String
 
     var body: some View {
-        DemoCard(title: title, subtitle: "Seeded demo is currently cleared", systemImage: "tray") {
+        DemoCard(title: title, subtitle: "Assessment status", systemImage: "tray") {
             Text(message)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -668,7 +935,7 @@ private struct FactRow: View {
             }
             Text(provenance)
                 .font(.caption)
-                .foregroundStyle(.indigo)
+                .foregroundStyle(Color.siteForest)
             Text("Evidence: \(evidence)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -726,7 +993,7 @@ private struct StatusBadge: View {
             .padding(.vertical, 5)
             .padding(.horizontal, 8)
             .foregroundStyle(.white)
-            .background(Capsule().fill(.indigo))
+            .background(Capsule().fill(Color.siteForest))
     }
 }
 
@@ -748,7 +1015,7 @@ private struct ScenarioBadge: View {
         case "conditional": return .orange
         case "fail": return .red
         case "insufficient_data": return .gray
-        default: return .indigo
+        default: return .siteForest
         }
     }
 }
@@ -776,6 +1043,11 @@ private func measurementString(_ measurement: DemoMeasurement) -> String {
     "\(measurement.value.formatted(.number.precision(.fractionLength(0...2)))) \(measurement.unit)"
 }
 
+private func modelFeetString(_ meters: Float) -> String {
+    let feet = Double(meters) * 3.28084
+    return "\(feet.formatted(.number.precision(.fractionLength(1)))) ft"
+}
+
 private func confidenceString(_ confidence: Double?) -> String {
     guard let confidence else { return "n/a" }
     return String(format: "%.0f%%", confidence * 100)
@@ -793,4 +1065,12 @@ private func rangeString(low: Double, expected: Double, high: Double, currency: 
     let expectedString = formatter.string(from: NSNumber(value: expected)) ?? "\(expected)"
     let highString = formatter.string(from: NSNumber(value: high)) ?? "\(high)"
     return "\(lowString) — \(expectedString) — \(highString)"
+}
+
+private extension Color {
+    static let siteForest = Color(red: 0.09, green: 0.25, blue: 0.19)
+    static let siteSage = Color(red: 0.88, green: 0.94, blue: 0.89)
+    static let siteMist = Color(red: 0.93, green: 0.96, blue: 0.93)
+    static let siteCanvas = Color(red: 0.97, green: 0.98, blue: 0.96)
+    static let siteBorder = Color(red: 0.83, green: 0.87, blue: 0.83)
 }

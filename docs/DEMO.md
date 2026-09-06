@@ -2,11 +2,15 @@
 
 ## Purpose and claim boundary
 
-Show a structured **preliminary** EV-charger assessment: evidence and user input are kept separate, deterministic fixture outputs are visible, and the handoff states what an electrician or AHJ must still verify. The agent may converse naturally, but the demo supports only a new Level 2 EV charger assessment; it must decline unsupported consumer systems such as a Tesla Powerwall 3.
+Show a structured **preliminary** EV-charger assessment: evidence and user input are kept separate, deterministic fixture outputs are visible, and the handoff states what an electrician or AHJ must still verify. A second live-assistant focus demonstrates a conceptual adjacent-room expansion: after a bounded interview, the user selects the divider wall and sees a conceptual opening on the captured model. It is not a structural finding, demolition instruction, permit approval, or feasibility conclusion; a licensed structural professional and the applicable permit authority must verify any removal. Unsupported consumer systems such as a Tesla Powerwall 3 remain declined.
 
 Do not describe this as a live end-to-end field assessment. The native shell creates the bundled modern fixture assessment, runs deterministic engineering and cost tools through the validated API, and renders returned provenance, requirements, handoff, and cost status. The local HTTP sequence and simulator build are verified; this updated flow is not yet accepted on a physical device. RoomPlan capture, panel-photo selection, and direct Realtime PCM voice are implemented but still require physical-device acceptance; durable persistence and handoff export remain future work. This rehearsal uses seeded SiteGraph v0 artifacts and fixture-scoped assumptions; do not claim they are current field observations or quotes.
 
 Safety language to read if asked: “This assessment is preliminary and based on visible evidence, user input, and deterministic checks. Final electrical decisions require a licensed electrician or the authority having jurisdiction.” Do not direct a consumer to open a panel, remove a dead front, touch wiring, bypass permitting, or perform electrical work.
+
+### Adjacent-room expansion contrast — 45 seconds
+
+Select **Adjacent-room expansion** in Live assistant details after scanning the two adjacent rooms in one capture. Ask how to make one room larger. The guide asks about intended use, permissions, visible utilities/openings, and whether a structural professional has reviewed the divider wall. When it requests a candidate opening, tap the divider wall: the 3D view draws an outlined opening and Results repeats the required structural and permit verification. Do not say that the scan establishes wall construction, load path, hidden utilities, demolition scope, or approval. This path compiles and has session-policy coverage; its live Realtime and physical-device acceptance remain pending.
 
 ## Fixtures and what each proves
 

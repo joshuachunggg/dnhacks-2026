@@ -68,16 +68,18 @@ private struct LiveAssistantView: View {
                 RoomModelQuickLookPreview(
                     modelURL: modelURL,
                     spatialHighlight: realtime.spatialHighlight,
+                    spatialVisuals: viewModel.spatialVisuals,
                     placementRequest: realtime.spatialPlacementRequest,
                     onPoseSelected: { pose in
                         guard let request = realtime.spatialPlacementRequest else { return }
+                        viewModel.previewSpatialPlacement(pose, request: request)
                         Task {
                             do {
                                 if request.kind == .routePoint {
-                                    if let route = realtime.addRouteWaypoint(pose) {
-                                        try await viewModel.recordRouteWaypoints(route)
-                                        realtime.completeRouteWaypoints(route)
-                                    }
+                                    realtime.addRouteWaypoint(pose)
+                                } else if request.kind == .candidateOpening {
+                                    viewModel.recordConceptualOpening(at: pose)
+                                    realtime.completeConceptualOpening(pose)
                                 } else {
                                     try await viewModel.recordSpatialPlacement(pose, request: request)
                                     realtime.completeSpatialPlacement(pose)
@@ -103,6 +105,46 @@ private struct LiveAssistantView: View {
             )
             .ignoresSafeArea()
             .allowsHitTesting(false)
+
+            if let request = realtime.spatialPlacementRequest {
+                VStack {
+                    Spacer()
+                    Text(request.kind == .routePoint
+                         ? "Tap the full cable route on the room model, including bends. Finish when you have at least two points."
+                         : "Tap the exact wall location for the \(request.kind.displayName).")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(14)
+                        .background(.indigo.opacity(0.82), in: RoundedRectangle(cornerRadius: 14))
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 28)
+                }
+                .ignoresSafeArea(edges: .bottom)
+                .allowsHitTesting(false)
+            }
+
+            if realtime.spatialPlacementRequest?.kind == .routePoint {
+                VStack {
+                    Spacer()
+                    Button("Finish route (\(realtime.routeWaypointCount) points)") {
+                        guard let route = realtime.finishRouteWaypoints() else { return }
+                        Task {
+                            do {
+                                try await viewModel.recordRouteWaypoints(route)
+                                realtime.completeRouteWaypoints(route)
+                            } catch {
+                                realtime.spatialPlacementFailed("Could not record that route: \(error.localizedDescription)")
+                            }
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.indigo)
+                    .disabled(realtime.routeWaypointCount < 2)
+                    .padding(.bottom, 28)
+                }
+                .padding(.horizontal, 24)
+            }
 
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
@@ -199,13 +241,21 @@ private struct LiveAssistantView: View {
                         .background(.indigo.opacity(0.72), in: RoundedRectangle(cornerRadius: 14))
                     }
 
-                    if viewModel.latestPanelEvidenceId != nil {
-                        PanelFactConfirmationForm(viewModel: viewModel)
-                    }
-
                     Text("Collected: \(viewModel.collectedSpatialSummary)")
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.9))
+
+                    if viewModel.engineeringStatusIsError {
+                        Text(viewModel.engineeringStatus)
+                            .font(.caption)
+                            .foregroundStyle(.yellow)
+                    }
+
+                    if viewModel.spatialVisuals.candidateOpeningPose != nil {
+                        Text("Conceptual opening shown — structural feasibility and approvals remain unverified.")
+                            .font(.caption)
+                            .foregroundStyle(.mint)
+                    }
 
                     if !realtime.isConnected {
                         SecureField("Realtime demo token", text: $viewModel.realtimeDemoToken)
@@ -247,8 +297,8 @@ private struct LiveAssistantView: View {
 
                         Button("Finish and review") {
                             Task {
+                                guard await viewModel.runEngineeringScenario() else { return }
                                 realtime.disconnect()
-                                await viewModel.runEngineeringScenario()
                                 finishAssessment()
                             }
                         }
@@ -262,6 +312,8 @@ private struct LiveAssistantView: View {
                 .background(.black.opacity(0.58), in: RoundedRectangle(cornerRadius: 20))
             }
             .padding()
+            .opacity(realtime.spatialPlacementRequest == nil ? 1 : 0)
+            .allowsHitTesting(realtime.spatialPlacementRequest == nil)
         }
         .onChange(of: realtime.evidencePhotoRequest?.id) { _, requestId in
             if requestId == nil {
@@ -301,47 +353,23 @@ private struct LiveAssistantView: View {
                 camera.clearStatus()
             }
         }
-    }
-}
-
-private struct PanelFactConfirmationForm: View {
-    @ObservedObject var viewModel: SiteGraphDemoViewModel
-    @State private var serviceAmps = ""
-    @State private var busRatingAmps = ""
-    @State private var spareBreakerSpaces = ""
-    @State private var usingApproximation = false
-    @State private var error: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Confirm panel facts from the photo").font(.footnote.weight(.semibold))
-            Text("The image is evidence, not a rating. Enter only values you can see and confirm.").font(.caption)
-            HStack {
-                TextField("Service A", text: $serviceAmps).keyboardType(.numberPad)
-                TextField("Bus A (optional)", text: $busRatingAmps).keyboardType(.numberPad)
-                TextField("Spare slots", text: $spareBreakerSpaces).keyboardType(.numberPad)
-            }
-            .textFieldStyle(.roundedBorder)
-            Toggle("Proceed using planning approximations where the label is unreadable", isOn: $usingApproximation)
-                .font(.caption)
-            Button(usingApproximation ? "Proceed with approximations" : "Confirm visible panel facts") {
-                guard let service = Int(serviceAmps), let spare = Int(spareBreakerSpaces) else {
-                    error = "Service amps and spare breaker spaces are required."
-                    return
-                }
-                Task {
-                    do {
-                        try await viewModel.confirmPanelFacts(serviceAmps: service, busRatingAmps: Int(busRatingAmps), spareBreakerSpaces: spare, usingApproximation: usingApproximation)
-                        error = nil
-                    } catch let captureError { self.error = captureError.localizedDescription }
+        .onChange(of: realtime.panelFactRequest?.id) { _, _ in
+            guard let request = realtime.panelFactRequest else { return }
+            Task {
+                do {
+                    try await viewModel.recordPanelFact(request)
+                    realtime.completePanelFactRequest(
+                        recorded: true,
+                        message: "Recorded the user-confirmed \(request.field.displayName) panel fact."
+                    )
+                } catch {
+                    realtime.completePanelFactRequest(
+                        recorded: false,
+                        message: "Could not record that panel fact: \(error.localizedDescription)"
+                    )
                 }
             }
-            .buttonStyle(.borderedProminent)
-            if let error { Text(error).font(.caption).foregroundStyle(.red) }
         }
-        .foregroundStyle(.white)
-        .padding(12)
-        .background(.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
     }
 }
 
@@ -353,6 +381,12 @@ private struct AssessmentDetailsSheet: View {
         NavigationStack {
             Form {
                 Section("Known assessment details") {
+                    Picker("Demo focus", selection: $viewModel.assessmentFocus) {
+                        ForEach(AssessmentFocus.allCases) { focus in
+                            Text(focus.displayName).tag(focus)
+                        }
+                    }
+
                     TextField("Property address", text: $viewModel.propertyAddress)
                         .textContentType(.fullStreetAddress)
                         .textInputAutocapitalization(.words)

@@ -231,3 +231,13 @@ Append-only log template:
 - Reason: A narrow assessment-scoped upload endpoint can atomically write the USDZ, recompute its digest and length, and return a `local-mac://` reference that the phone verifies before submitting canonical metadata.
 - Consequences: Default bytes live under `data/spatial-artifacts/<assessmentId>/` (override with `SPATIAL_ARTIFACTS_DIR`), are ignored by Git, and persist across iOS app/build cleanup. The endpoint is trusted local-development/LAN infrastructure only; it does not authorize public download or agent retrieval.
 - Revisit trigger: An authenticated durable artifact provider and an authorized read contract are physically accepted.
+
+### 0023
+- ID: 0023
+- Date: 2026-09-06
+- Status: locked for the demo claim boundary
+- Decision: Expose adjacent-room expansion only as a user-selected conceptual opening, never as a structural feasibility recommendation.
+- Context: The spatial assistant can show how its captured-model interaction generalizes beyond EV charger placement, but RoomPlan geometry and conversation cannot establish load paths, hidden utilities, permits, or demolition safety.
+- Reason: A typed focus, bounded interview, and explicit candidate-opening visualization demonstrate the general interaction while keeping the product claim within evidence it actually has.
+- Consequences: The guide asks about use, approval, visible utilities/openings, and professional review before requesting a divider-wall tap. Results and the model visualization repeat that structural-professional and permit-authority verification are required. No structural calculation, removal event, or approval state is written to SiteGraph.
+- Revisit trigger: A reviewed structural-assessment contract has validated wall composition, utility detection, load-path analysis, and jurisdictional approval inputs.

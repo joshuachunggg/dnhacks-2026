@@ -92,6 +92,17 @@ struct SpatialCaptureRequestCheck {
         let visualBody = try JSONSerialization.jsonObject(with: try XCTUnwrap(visualRequest.httpBody)) as? [String: Any]
         precondition(visualBody?["eventName"] as? String == "visual.frame.recorded")
         precondition(((visualBody?["payload"] as? [String: Any])?["artifact"] as? [String: Any])?["kind"] as? String == "panel_image")
+
+        let stateURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            .appendingPathComponent("apps/ios/SiteGraphDemoState.swift")
+        let stateSource = try String(contentsOf: stateURL, encoding: .utf8)
+        guard let startRange = stateSource.range(of: "func startAssessmentFromAddress()"),
+              let clearRange = stateSource.range(of: "private func clearAssessment()")
+        else { preconditionFailure("The blank-assessment transition must remain explicit.") }
+        let startAssessment = String(stateSource[startRange.lowerBound..<clearRange.lowerBound])
+        precondition(!startAssessment.contains("latestSpatialCapture = nil"), "Starting an address-based assessment must retain the saved RoomPlan model.")
+        precondition(startAssessment.contains("spatialCaptureAssessmentId = nil"), "Starting a new assessment must re-associate the retained RoomPlan capture with the new assessment.")
+        precondition(stateSource.contains("syncSpatialCaptureIfNeeded"), "A retained RoomPlan model must be synced before evidence uses the new assessment.")
         print("Spatial capture request construction check passed.")
     }
 

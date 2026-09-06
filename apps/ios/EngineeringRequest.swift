@@ -19,6 +19,16 @@ enum EngineeringRequestBuilder {
         )
     }
 
+    static func assessmentGateRequest(baseURL: URL, assessmentId: String) -> URLRequest {
+        makePOSTRequest(
+            url: baseURL
+                .appendingPathComponent("api/assessments")
+                .appendingPathComponent(assessmentId)
+                .appendingPathComponent("assessment-gate"),
+            body: Data("{}".utf8)
+        )
+    }
+
     static func costToolRunRequest(baseURL: URL, assessmentId: String) -> URLRequest {
         makePOSTRequest(
             url: baseURL

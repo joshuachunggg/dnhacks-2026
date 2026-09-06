@@ -52,12 +52,19 @@ test('mechanical gate returns one exact missing-input action and invokes enginee
     artifact: { id: 'artifact-gate-panel', kind: 'panel_image', uri: 'file:///panel.jpg', contentType: 'image/jpeg', byteLength: 10, sha256: 'a'.repeat(64) },
     evidence: { id: 'evidence-gate-panel', type: 'image_frame', label: 'Panel image', uri: 'file:///panel.jpg' },
   });
+  response = await gate();
+  body = await response.json();
+  assert.deepEqual(body.gate, {
+    status: 'needs_input',
+    nextAction: 'confirm_panel_facts',
+    message: 'Ask for each missing panel fact and whether the user knows it or is approximating. A supplied approximation can support a planning-only deterministic result with a professional-verification disclaimer.',
+  });
   await append('panel.facts.confirmed', {
     panelId: fixture.electricalPanel.id,
     facts: [
-      { id: 'fact-service', field: 'service_amps', value: 200, unit: 'A', status: 'confirmed', sourceType: 'user_supplied', evidenceIds: ['evidence-gate-panel'], timestamp, producer: 'test', notes: [] },
+      { id: 'fact-service', field: 'service_amps', value: 200, unit: 'A', status: 'confirmed', sourceType: 'user_supplied', evidenceIds: ['evidence-gate-panel'], timestamp, producer: 'test', notes: ['User explicitly chose this planning approximation after the panel image could not verify the value. Professional verification remains required.'] },
       { id: 'fact-bus', field: 'bus_rating_amps', value: 200, unit: 'A', status: 'confirmed', sourceType: 'user_supplied', evidenceIds: ['evidence-gate-panel'], timestamp, producer: 'test', notes: [] },
-      { id: 'fact-spare', field: 'spare_breaker_spaces', value: 4, status: 'confirmed', sourceType: 'user_supplied', evidenceIds: ['evidence-gate-panel'], timestamp, producer: 'test', notes: [] },
+      { id: 'fact-spare', field: 'spare_breaker_spaces', value: 4, status: 'confirmed', sourceType: 'user_supplied', evidenceIds: ['evidence-gate-panel'], timestamp, producer: 'test', notes: ['User explicitly chose this planning approximation after the panel image could not verify the value. Professional verification remains required.'] },
     ],
   });
   await append('spatial.location.confirmed', {
@@ -84,6 +91,7 @@ test('mechanical gate returns one exact missing-input action and invokes enginee
   body = await response.json();
   assert.equal(body.gate.status, 'ready');
   assert.equal(body.gate.nextAction, 'finish_and_review');
+  assert.equal(body.gate.planningOnly, true);
   assert.equal(body.gate.result.recommendation.chargerCurrentAmps, 32);
   assert.equal(body.assessment.measurements.at(-1).unit, 'ft');
   assert.equal(body.assessment.toolRuns.at(-1).toolName, 'runEngineeringScenario');

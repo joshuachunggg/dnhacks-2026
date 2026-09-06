@@ -35,6 +35,7 @@
 
 ### P1 — highly desirable
 - Better spatial visualization and route tracing beyond the first captured-room preview.
+- A conceptual adjacent-room opening visualization driven by a user-selected divider wall; multi-room reconstruction and structural assessment remain out of scope.
 - User confirmation / contradiction workflow for OCR.
 - One source-backed demo-jurisdiction permit card.
 - Load-managed option for constrained service.

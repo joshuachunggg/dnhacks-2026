@@ -29,6 +29,16 @@ final class LocalSpatialArtifactStore {
         )
     }
 
+    static func isRetained(_ artifact: SpatialArtifact) -> Bool {
+        guard let fileURL = artifact.localFileURL,
+              let data = try? Data(contentsOf: fileURL),
+              data.count == artifact.byteLength else {
+            return false
+        }
+        let digest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        return digest.caseInsensitiveCompare(artifact.sha256) == .orderedSame
+    }
+
     private func fileExtension(for kind: SpatialArtifact.Kind) -> String {
         switch kind {
         case .roomPlanJSON:

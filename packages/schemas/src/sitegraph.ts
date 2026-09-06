@@ -259,10 +259,8 @@ export const PanelFactsConfirmedEventSchema = AssessmentEventBaseSchema.extend({
   eventName: z.literal('panel.facts.confirmed'),
   payload: z.object({
     panelId: z.string(),
-    facts: z.array(PanelFactConfirmationSchema).min(2).superRefine((facts, context) => {
+    facts: z.array(PanelFactConfirmationSchema).min(1).superRefine((facts, context) => {
       const fields = new Set(facts.map((fact) => fact.field));
-      if (!fields.has('service_amps')) context.addIssue({ code: 'custom', message: 'service_amps confirmation is required' });
-      if (!fields.has('spare_breaker_spaces')) context.addIssue({ code: 'custom', message: 'spare_breaker_spaces confirmation is required' });
       if (facts.length !== fields.size) context.addIssue({ code: 'custom', message: 'Panel fact fields must not be duplicated' });
     }),
   }).strict(),

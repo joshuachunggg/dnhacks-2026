@@ -27,7 +27,7 @@ struct RoomPlanCaptureCard: View {
                             .foregroundStyle(.secondary)
                     }
                 } else {
-                    Text("Scan the relevant garage or room to retain a local RoomPlan USDZ model for the assessment.")
+                    Text("For EV placement, scan the relevant garage or room. For room expansion, scan both adjacent rooms and their shared divider in one continuous capture.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -52,6 +52,7 @@ struct RoomPlanCaptureCard: View {
                     .sheet(isPresented: $isPresentingModelPreview) {
                         RoomModelQuickLookPreview(modelURL: modelURL)
                             .ignoresSafeArea()
+                            .presentationDragIndicator(.visible)
                     }
                 } else if capturePayload != nil {
                     Button("Restore saved scan from Mac") {
@@ -104,13 +105,13 @@ private struct RoomPlanCaptureSheet: UIViewControllerRepresentable {
 }
 
 private final class RoomPlanCaptureViewController: UIViewController, RoomCaptureViewDelegate {
-    private let roomCaptureView = RoomCaptureView(frame: .zero)
+    private var roomCaptureView: RoomCaptureView?
     private let onComplete: (Result<SpatialCapturePayload, Error>) -> Void
     private var didStartCapture = false
-    private var didFinishCapture = false
-    private let startButton = UIButton(type: .system)
+    private var isFinishingCapture = false
+    private var didDeliverResult = false
+    private var isCapturePaused = false
     private let stopButton = UIButton(type: .system)
-    private let statusLabel = UILabel()
 
     init(onComplete: @escaping (Result<SpatialCapturePayload, Error>) -> Void) {
         self.onComplete = onComplete
@@ -124,35 +125,6 @@ private final class RoomPlanCaptureViewController: UIViewController, RoomCapture
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        roomCaptureView.translatesAutoresizingMaskIntoConstraints = false
-        roomCaptureView.delegate = self
-        view.addSubview(roomCaptureView)
-        NSLayoutConstraint.activate([
-            roomCaptureView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            roomCaptureView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            roomCaptureView.topAnchor.constraint(equalTo: view.topAnchor),
-            roomCaptureView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-        ])
-
-        statusLabel.text = "Ready. Tap Start room scan when you are ready to move around the room."
-        statusLabel.font = .preferredFont(forTextStyle: .footnote)
-        statusLabel.textColor = .white
-        statusLabel.textAlignment = .center
-        statusLabel.numberOfLines = 0
-        statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.65)
-        statusLabel.layer.cornerRadius = 10
-        statusLabel.clipsToBounds = true
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(statusLabel)
-
-        startButton.setTitle("Start room scan", for: .normal)
-        startButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        startButton.tintColor = .white
-        startButton.backgroundColor = .systemIndigo
-        startButton.layer.cornerRadius = 12
-        startButton.translatesAutoresizingMaskIntoConstraints = false
-        startButton.addTarget(self, action: #selector(startCapture), for: .touchUpInside)
-        view.addSubview(startButton)
 
         stopButton.setTitle("Finish room scan", for: .normal)
         stopButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
@@ -163,13 +135,6 @@ private final class RoomPlanCaptureViewController: UIViewController, RoomCapture
         stopButton.addTarget(self, action: #selector(finishCapture), for: .touchUpInside)
         view.addSubview(stopButton)
         NSLayoutConstraint.activate([
-            statusLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 24),
-            statusLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
-            statusLabel.bottomAnchor.constraint(equalTo: startButton.topAnchor, constant: -12),
-            startButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 24),
-            startButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
-            startButton.bottomAnchor.constraint(equalTo: stopButton.topAnchor, constant: -12),
-            startButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 52),
             stopButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 24),
             stopButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
             stopButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
@@ -177,48 +142,100 @@ private final class RoomPlanCaptureViewController: UIViewController, RoomCapture
         ])
         stopButton.isEnabled = false
         stopButton.alpha = 0.5
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
 
     deinit { NotificationCenter.default.removeObserver(self) }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        if didStartCapture && !didFinishCapture { roomCaptureView.captureSession.stop(pauseARSession: true) }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        startCaptureIfVisible()
     }
 
-    @objc private func startCapture() {
-        guard !didStartCapture else { return }
-        didStartCapture = true
-        roomCaptureView.captureSession.run(configuration: RoomCaptureSession.Configuration())
-        startButton.isEnabled = false
-        startButton.alpha = 0.5
-        stopButton.isEnabled = true
-        stopButton.alpha = 1
-        statusLabel.text = "Scanning. Slowly move around the relevant room, then tap Finish room scan."
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        pauseCaptureForInterruption()
+    }
+
+    private func startCaptureIfVisible() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self,
+                  UIApplication.shared.applicationState == .active,
+                  self.viewIfLoaded?.window != nil,
+                  !self.didStartCapture,
+                  !self.isFinishingCapture,
+                  !self.didDeliverResult
+            else { return }
+            self.isCapturePaused = false
+            self.installCaptureView()
+            self.didStartCapture = true
+            self.roomCaptureView?.captureSession.run(configuration: RoomCaptureSession.Configuration())
+            self.stopButton.isEnabled = true
+            self.stopButton.alpha = 1
+        }
+    }
+
+    private func installCaptureView() {
+        guard roomCaptureView == nil else { return }
+        let captureView = RoomCaptureView(frame: .zero)
+        captureView.translatesAutoresizingMaskIntoConstraints = false
+        captureView.delegate = self
+        view.insertSubview(captureView, at: 0)
+        NSLayoutConstraint.activate([
+            captureView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            captureView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            captureView.topAnchor.constraint(equalTo: view.topAnchor),
+            captureView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
+        roomCaptureView = captureView
     }
 
     @objc private func finishCapture() {
-        guard didStartCapture, !didFinishCapture else { return }
-        statusLabel.text = "Processing room scan…"
+        guard didStartCapture, !isFinishingCapture, !didDeliverResult else { return }
+        isFinishingCapture = true
+        didStartCapture = false
         stopButton.isEnabled = false
-        roomCaptureView.captureSession.stop(pauseARSession: false)
+        roomCaptureView?.captureSession.stop(pauseARSession: true)
     }
 
     @objc private func applicationDidEnterBackground() {
-        guard didStartCapture, !didFinishCapture else { return }
-        roomCaptureView.captureSession.stop(pauseARSession: true)
-        didStartCapture = false
+        pauseCaptureForInterruption()
+    }
+
+    @objc private func applicationWillResignActive() {
+        pauseCaptureForInterruption()
+    }
+
+    private func pauseCaptureForInterruption() {
+        guard didStartCapture, !isFinishingCapture, !didDeliverResult else { return }
+        isCapturePaused = true
+        releaseCaptureResources()
         stopButton.isEnabled = false
         stopButton.alpha = 0.5
-        startButton.isEnabled = true
-        startButton.alpha = 1
-        statusLabel.text = "Scan paused while the app was inactive. Tap Start room scan to begin a fresh scan."
+    }
+
+    private func releaseCaptureResources() {
+        guard let roomCaptureView else { return }
+        if didStartCapture {
+            roomCaptureView.captureSession.stop(pauseARSession: true)
+        }
+        roomCaptureView.delegate = nil
+        roomCaptureView.removeFromSuperview()
+        self.roomCaptureView = nil
+        didStartCapture = false
+    }
+
+    @objc private func applicationDidBecomeActive() {
+        startCaptureIfVisible()
     }
 
     func captureView(shouldPresent roomDataForProcessing: CapturedRoomData, error: Error?) -> Bool {
+        guard !isCapturePaused else { return false }
         if let error {
-            didFinishCapture = true
+            didDeliverResult = true
+            releaseCaptureResources()
             DispatchQueue.main.async { self.onComplete(.failure(error)) }
             return false
         }
@@ -226,17 +243,20 @@ private final class RoomPlanCaptureViewController: UIViewController, RoomCapture
     }
 
     func captureView(didPresent processedResult: CapturedRoom, error: Error?) {
-        guard !didFinishCapture else { return }
-        didFinishCapture = true
+        guard !didDeliverResult else { return }
+        didDeliverResult = true
 
         do {
             if let error { throw error }
             let payload = try exportCapture(processedResult)
+            releaseCaptureResources()
             DispatchQueue.main.async { self.onComplete(.success(payload)) }
         } catch {
+            releaseCaptureResources()
             DispatchQueue.main.async { self.onComplete(.failure(error)) }
         }
     }
+
 
     private func exportCapture(_ room: CapturedRoom) throws -> SpatialCapturePayload {
         let captureId = "capture-roomplan-\(UUID().uuidString.lowercased())"

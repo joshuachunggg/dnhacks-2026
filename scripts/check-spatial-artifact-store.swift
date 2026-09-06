@@ -19,10 +19,13 @@ struct SpatialArtifactStoreCheck {
         precondition(artifact.kind == .roomUSDZ)
         precondition(artifact.byteLength == 3)
         precondition(artifact.sha256.count == 64)
+        precondition(LocalSpatialArtifactStore.isRetained(artifact))
         guard let localFileURL = artifact.localFileURL else {
             preconditionFailure("Persisted local artifact must expose a file URL for Quick Look preview")
         }
         precondition(FileManager.default.fileExists(atPath: localFileURL.path))
+        try Data([0xFF]).write(to: localFileURL)
+        precondition(!LocalSpatialArtifactStore.isRetained(artifact), "A changed USDZ must not be opened as the retained room model.")
         print("Spatial artifact local persistence check passed.")
     }
 }

@@ -1,0 +1,189 @@
+{"kind":"deck","id":"pr/oe9xcx","name":"Deck"}
+{"kind":"layout","layoutId":"93f6f65f-01b1-429c-ac75-23674ad8e378","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"2ecb6edc-4cd9-45fd-913b-bcd0ff116d2f","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/iadi7i","slide":1,"title":"SITEGRAPH","textShapes":12}
+{"kind":"shape","id":"sh/tsvulwfq","slide":1,"bbox":[0,0,1280,18]}
+{"kind":"textbox","id":"sh/6p4bqhwf","slide":1,"text":"SITEGRAPH","textPreview":"SITEGRAPH","textChars":9,"textLines":1,"bbox":[48,58,240,30]}
+{"kind":"textbox","id":"sh/7qdcjmx0","slide":1,"text":"A field engineer\nfor every homeowner.","textPreview":"A field engineer | for every homeowner.","textChars":37,"textLines":2,"bbox":[48,122,630,160]}
+{"kind":"textbox","id":"sh/gf6dwreh","slide":1,"text":"Understand the house, plan the project, and walk into every quote with evidence.","textPreview":"Understand the house, plan the project, and walk into every quote with evidence.","textChars":80,"textLines":1,"bbox":[52,308,500,66]}
+{"kind":"shape","id":"sh/hgfupwf2","slide":1,"bbox":[52,410,292,26]}
+{"kind":"textbox","id":"sh/utobuhwb","slide":1,"text":"STARTING WITH LEVEL 2 EV CHARGING","textPreview":"STARTING WITH LEVEL 2 EV CHARGING","textChars":33,"textLines":1,"bbox":[64,416,268,14]}
+{"kind":"shape","id":"sh/fexcnmxw","slide":1,"bbox":[735,86,418,434]}
+{"kind":"shape","id":"sh/wj2tk7ex","slide":1,"bbox":[770,132,350,300]}
+{"kind":"shape","id":"sh/xkbudcfi","slide":1,"bbox":[770,132,350,5]}
+{"kind":"shape","id":"sh/t8be9on6","slide":1,"bbox":[942,132,5,300]}
+{"kind":"shape","id":"sh/872x0j6l","slide":1,"bbox":[770,274,350,5]}
+{"kind":"shape","id":"sh/76tw7y50","slide":1,"bbox":[850,274,5,158]}
+{"kind":"shape","id":"sh/65kfytof","slide":1,"bbox":[770,378,82,5]}
+{"kind":"shape","id":"sh/hcvyd8n2","slide":1,"bbox":[1007,274,5,105]}
+{"kind":"shape","id":"sh/gb2x436h","slide":1,"bbox":[1010,334,48,48]}
+{"kind":"textbox","id":"sh/vatwby5w","slide":1,"text":"EVSE","textPreview":"EVSE","textChars":4,"textLines":1,"bbox":[1018,350,34,14]}
+{"kind":"shape","id":"sh/u9kf2tor","slide":1,"bbox":[796,177,52,62]}
+{"kind":"textbox","id":"sh/50vyh8ne","slide":1,"text":"PANEL","textPreview":"PANEL","textChars":5,"textLines":1,"bbox":[802,201,40,14]}
+{"kind":"textbox","id":"sh/4zmx836t","slide":1,"text":"panel","textPreview":"panel","textChars":5,"textLines":1,"bbox":[778,246,56,14]}
+{"kind":"textbox","id":"sh/ojuhkrup","slide":1,"text":"garage","textPreview":"garage","textChars":6,"textLines":1,"bbox":[965,292,66,14]}
+{"kind":"textbox","id":"sh/pk3idwva","slide":1,"text":"31 ft planned route","textPreview":"31 ft planned route","textChars":19,"textLines":1,"bbox":[864,454,170,20]}
+{"kind":"shape","id":"sh/2hczihcz","slide":1,"bbox":[735,564,418,1]}
+{"kind":"textbox","id":"sh/3il0bmdk","slide":1,"text":"Spatial context  •  structured evidence  •  clear next steps","textPreview":"Spatial context  •  structured evidence  •  clear next steps","textChars":60,"textLines":1,"bbox":[755,585,380,28]}
+{"kind":"shape","id":"sh/c7ehoru1","slide":1,"bbox":[0,634,1280,86]}
+{"kind":"textbox","id":"sh/d8nihwvm","slide":1,"text":"DNHacks 2026","textPreview":"DNHacks 2026","textChars":12,"textLines":1,"bbox":[48,662,230,20]}
+{"kind":"textbox","id":"sh/q5czm1cv","slide":1,"text":"A more legible home changes who gets to make informed decisions.","textPreview":"A more legible home changes who gets to make informed decisions.","textChars":64,"textLines":1,"bbox":[550,662,680,20]}
+{"kind":"notes","id":"nt/iadi7i","slide":1,"text":"Opening: SiteGraph gives homeowners an evidence-based planning layer for complex home projects. Today’s demo focuses on a new Level 2 EV charger assessment."}
+{"kind":"slide","id":"sl/aucxy7","slide":2,"title":"02","textShapes":16}
+{"kind":"shape","id":"sh/lk3adkny","slide":2,"bbox":[0,0,1280,16]}
+{"kind":"textbox","id":"sh/yhcb2p4n","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[42,39,50,26]}
+{"kind":"textbox","id":"sh/jilsbu58","slide":2,"text":"The homeowner starts at an information disadvantage.","textPreview":"The homeowner starts at an information disadvantage.","textChars":52,"textLines":1,"bbox":[42,72,920,68]}
+{"kind":"textbox","id":"sh/8nut8zmp","slide":2,"text":"The hardest part of a home project often arrives before any work begins.","textPreview":"The hardest part of a home project often arrives before any work begins.","textChars":72,"textLines":1,"bbox":[42,145,950,42]}
+{"kind":"shape","id":"sh/t8nah4na","slide":2,"bbox":[42,686,1196,1]}
+{"kind":"textbox","id":"sh/6lcb6p4j","slide":2,"text":"SITEGRAPH  |  DNHACKS 2026","textPreview":"SITEGRAPH  |  DNHACKS 2026","textChars":26,"textLines":1,"bbox":[42,696,330,14]}
+{"kind":"textbox","id":"sh/7mlsfu54","slide":2,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[1210,696,28,14]}
+{"kind":"shape","id":"sh/ora9wfml","slide":2,"bbox":[42,235,354,222]}
+{"kind":"shape","id":"sh/9cja50nq","slide":2,"bbox":[66,260,40,40]}
+{"kind":"textbox","id":"sh/10f218z2","slide":2,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[74,272,24,14]}
+{"kind":"textbox","id":"sh/gf61s3yh","slide":2,"text":"Opaque scope","textPreview":"Opaque scope","textChars":12,"textLines":1,"bbox":[66,324,280,28]}
+{"kind":"textbox","id":"sh/fexkzyhw","slide":2,"text":"A quote can hide what the work assumes about the panel, route, service, or permit path.","textPreview":"A quote can hide what the work assumes about the panel, route, service, or permit path.","textChars":87,"textLines":1,"bbox":[66,365,300,67]}
+{"kind":"shape","id":"sh/edojqdgb","slide":2,"bbox":[442,235,354,222]}
+{"kind":"shape","id":"sh/p4z25szy","slide":2,"bbox":[466,260,40,40]}
+{"kind":"textbox","id":"sh/o3q1wnyt","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[474,272,24,14]}
+{"kind":"textbox","id":"sh/32hk3ih8","slide":2,"text":"Uneven expertise","textPreview":"Uneven expertise","textChars":16,"textLines":1,"bbox":[466,324,280,28]}
+{"kind":"textbox","id":"sh/21ojudgn","slide":2,"text":"The homeowner has to evaluate technical claims without the observations that support them.","textPreview":"The homeowner has to evaluate technical claims without the observations that support them.","textChars":90,"textLines":1,"bbox":[466,365,300,67]}
+{"kind":"shape","id":"sh/d8z29sza","slide":2,"bbox":[842,235,354,222]}
+{"kind":"shape","id":"sh/c7q10nyp","slide":2,"bbox":[866,260,40,40]}
+{"kind":"textbox","id":"sh/wnidsvax","slide":2,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[874,272,24,14]}
+{"kind":"textbox","id":"sh/xorul0ri","slide":2,"text":"Costly uncertainty","textPreview":"Costly uncertainty","textChars":18,"textLines":1,"bbox":[866,324,280,28]}
+{"kind":"textbox","id":"sh/al0vqls7","slide":2,"text":"A vague recommendation can become an avoidable upgrade, delay, or predatory price.","textPreview":"A vague recommendation can become an avoidable upgrade, delay, or predatory price.","textChars":82,"textLines":1,"bbox":[866,365,300,67]}
+{"kind":"shape","id":"sh/vm9cjq9s","slide":2,"bbox":[42,518,132,26]}
+{"kind":"textbox","id":"sh/4r2dwfa9","slide":2,"text":"WHO WE SERVE","textPreview":"WHO WE SERVE","textChars":12,"textLines":1,"bbox":[54,524,108,14]}
+{"kind":"textbox","id":"sh/5sbupkru","slide":2,"text":"Homeowners planning a high-stakes upgrade who need enough clarity to ask better questions, compare scope, and know when a licensed professional must decide.","textPreview":"Homeowners planning a high-stakes upgrade who need enough clarity to ask better questions, compare scope, and know when a licensed profes...","textChars":156,"textLines":1,"bbox":[42,556,1100,52]}
+{"kind":"notes","id":"nt/aucxy7","slide":2,"text":"Pain point: residential projects are opaque precisely when stakes are high. We serve homeowners, especially those planning upgrades without technical training. We do not replace licensed professionals."}
+{"kind":"slide","id":"sl/syqzkt","slide":3,"title":"03","textShapes":19}
+{"kind":"shape","id":"sh/25oz21sf","slide":3,"bbox":[0,0,1280,16]}
+{"kind":"textbox","id":"sh/p8zidgrq","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[42,39,50,26]}
+{"kind":"textbox","id":"sh/o7qh4bql","slide":3,"text":"Today, SiteGraph turns a room into a defensible starting point.","textPreview":"Today, SiteGraph turns a room into a defensible starting point.","textChars":63,"textLines":1,"bbox":[42,72,920,68]}
+{"kind":"textbox","id":"sh/fixg769o","slide":3,"text":"A guided capture flow creates a shared record before anyone starts guessing.","textPreview":"A guided capture flow creates a shared record before anyone starts guessing.","textChars":76,"textLines":1,"bbox":[42,145,950,42]}
+{"kind":"shape","id":"sh/ehozy1s3","slide":3,"bbox":[42,686,1196,1]}
+{"kind":"textbox","id":"sh/1kfy9wru","slide":3,"text":"SITEGRAPH  |  DNHACKS 2026","textPreview":"SITEGRAPH  |  DNHACKS 2026","textChars":26,"textLines":1,"bbox":[42,696,330,14]}
+{"kind":"textbox","id":"sh/gj6h0ba9","slide":3,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[1210,696,28,14]}
+{"kind":"shape","id":"sh/ze10jq98","slide":3,"bbox":[42,250,252,252]}
+{"kind":"textbox","id":"sh/ydszal8n","slide":3,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[66,276,46,28]}
+{"kind":"textbox","id":"sh/8reporyx","slide":3,"text":"Capture","textPreview":"Capture","textChars":7,"textLines":1,"bbox":[66,329,204,28]}
+{"kind":"textbox","id":"sh/9sn6xwfi","slide":3,"text":"Scan one room and collect panel, route, and proposed-location context.","textPreview":"Scan one room and collect panel, route, and proposed-location context.","textChars":70,"textLines":1,"bbox":[66,376,204,83]}
+{"kind":"shape","id":"sh/mpw7mhgr","slide":3,"bbox":[342,250,252,252]}
+{"kind":"textbox","id":"sh/nq5ovmxc","slide":3,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[366,276,46,28]}
+{"kind":"textbox","id":"sh/03epk7yl","slide":3,"text":"Structure","textPreview":"Structure","textChars":9,"textLines":1,"bbox":[366,329,204,28]}
+{"kind":"textbox","id":"sh/l4n6tcf6","slide":3,"text":"Label what was observed, supplied, or estimated. Keep confidence and evidence visible.","textPreview":"Label what was observed, supplied, or estimated. Keep confidence and evidence visible.","textChars":86,"textLines":1,"bbox":[366,376,204,83]}
+{"kind":"shape","id":"sh/y1c7ihgv","slide":3,"bbox":[642,250,252,252]}
+{"kind":"textbox","id":"sh/z2lormxg","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[666,276,46,28]}
+{"kind":"textbox","id":"sh/czupg7yp","slide":3,"text":"Calculate","textPreview":"Calculate","textChars":9,"textLines":1,"bbox":[666,329,204,28]}
+{"kind":"textbox","id":"sh/d036pcfa","slide":3,"text":"Run deterministic feasibility and planning-cost tools against the structured assessment.","textPreview":"Run deterministic feasibility and planning-cost tools against the structured assessment.","textChars":88,"textLines":1,"bbox":[666,376,204,83]}
+{"kind":"shape","id":"sh/twvmtory","slide":3,"bbox":[942,250,252,252]}
+{"kind":"textbox","id":"sh/svm5k3qd","slide":3,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[966,276,46,28]}
+{"kind":"textbox","id":"sh/rud4ry9s","slide":3,"text":"Handoff","textPreview":"Handoff","textChars":7,"textLines":1,"bbox":[966,329,204,28]}
+{"kind":"textbox","id":"sh/6t4nit8n","slide":3,"text":"Show assumptions, unresolved checks, and the questions for an electrician or installer.","textPreview":"Show assumptions, unresolved checks, and the questions for an electrician or installer.","textChars":87,"textLines":1,"bbox":[966,376,204,83]}
+{"kind":"shape","id":"sh/5svmpor2","slide":3,"bbox":[294,368,48,4]}
+{"kind":"shape","id":"sh/4rmlgjqh","slide":3,"bbox":[594,368,48,4]}
+{"kind":"shape","id":"sh/jqt4ne9w","slide":3,"bbox":[894,368,48,4]}
+{"kind":"shape","id":"sh/ipk3e98b","slide":3,"bbox":[42,552,212,26]}
+{"kind":"textbox","id":"sh/pofm1s76","slide":3,"text":"CURRENT DEMO BOUNDARY","textPreview":"CURRENT DEMO BOUNDARY","textChars":21,"textLines":1,"bbox":[54,558,188,14]}
+{"kind":"textbox","id":"sh/on65snql","slide":3,"text":"Level 2 EV charger planning with seeded or captured evidence, preliminary ranges, explicit provenance, and professional-verification items. No quote, certification, or permit approval claim.","textPreview":"Level 2 EV charger planning with seeded or captured evidence, preliminary ranges, explicit provenance, and professional-verification item...","textChars":190,"textLines":1,"bbox":[42,590,1120,45]}
+{"kind":"notes","id":"nt/syqzkt","slide":3,"text":"Current capability: RoomPlan-backed spatial context, typed evidence, deterministic engineering and cost scenarios, and installer handoff. The displayed range is preliminary and fixture-scoped, never a contractor quote."}
+{"kind":"slide","id":"sl/m8owhf","slide":4,"title":"04","textShapes":15}
+{"kind":"shape","id":"sh/h8bypwra","slide":4,"bbox":[0,0,1280,16]}
+{"kind":"textbox","id":"sh/u50zuhsj","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[42,39,50,26]}
+{"kind":"textbox","id":"sh/f69gnmt4","slide":4,"text":"AI guides the work. Deterministic tools defend the answer.","textPreview":"AI guides the work. Deterministic tools defend the answer.","textChars":58,"textLines":1,"bbox":[42,72,920,68]}
+{"kind":"textbox","id":"sh/4b2h0ral","slide":4,"text":"SiteGraph couples a real-time field assistant with typed evidence and calculations that fail closed when facts are missing.","textPreview":"SiteGraph couples a real-time field assistant with typed evidence and calculations that fail closed when facts are missing.","textChars":123,"textLines":1,"bbox":[42,145,950,42]}
+{"kind":"shape","id":"sh/pcbytwr6","slide":4,"bbox":[42,686,1196,1]}
+{"kind":"textbox","id":"sh/29kzyhsv","slide":4,"text":"SITEGRAPH  |  DNHACKS 2026","textPreview":"SITEGRAPH  |  DNHACKS 2026","textChars":26,"textLines":1,"bbox":[42,696,330,14]}
+{"kind":"textbox","id":"sh/3atgrm90","slide":4,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[1210,696,28,14]}
+{"kind":"shape","id":"sh/cfmh4bax","slide":4,"bbox":[42,226,1158,70]}
+{"kind":"textbox","id":"sh/dgvixgri","slide":4,"text":"01  Spatial capture","textPreview":"01  Spatial capture","textChars":19,"textLines":1,"bbox":[66,243,268,25]}
+{"kind":"textbox","id":"sh/l07e5ori","slide":4,"text":"Native RoomPlan scan, local USDZ artifact, and a SHA-256 descriptor preserve a concrete spatial record.","textPreview":"Native RoomPlan scan, local USDZ artifact, and a SHA-256 descriptor preserve a concrete spatial record.","textChars":103,"textLines":1,"bbox":[360,240,806,39]}
+{"kind":"shape","id":"sh/0zyxwjax","slide":4,"bbox":[42,317,1158,70]}
+{"kind":"textbox","id":"sh/zypw3e9c","slide":4,"text":"02  Real-time guide","textPreview":"02  Real-time guide","textChars":19,"textLines":1,"bbox":[66,334,268,25]}
+{"kind":"textbox","id":"sh/yxgfu9sr","slide":4,"text":"A server-minted Realtime session gathers structured facts, requests only supported evidence, and follows a bounded policy.","textPreview":"A server-minted Realtime session gathers structured facts, requests only supported evidence, and follows a bounded policy.","textChars":122,"textLines":1,"bbox":[360,331,806,39]}
+{"kind":"shape","id":"sh/9ore9oru","slide":4,"bbox":[42,408,1158,70]}
+{"kind":"textbox","id":"sh/8nix0ja9","slide":4,"text":"03  Typed boundary","textPreview":"03  Typed boundary","textChars":18,"textLines":1,"bbox":[66,425,268,25]}
+{"kind":"textbox","id":"sh/nm9w7e9o","slide":4,"text":"Zod-validated SiteGraph events label observations, user inputs, spatial facts, confidence, and evidence IDs.","textPreview":"Zod-validated SiteGraph events label observations, user inputs, spatial facts, confidence, and evidence IDs.","textChars":108,"textLines":1,"bbox":[360,422,806,39]}
+{"kind":"shape","id":"sh/ml0fy9s3","slide":4,"bbox":[42,499,1158,70]}
+{"kind":"textbox","id":"sh/psnexkba","slide":4,"text":"04  Deterministic output","textPreview":"04  Deterministic output","textChars":24,"textLines":1,"bbox":[66,516,268,25]}
+{"kind":"textbox","id":"sh/oredozap","slide":4,"text":"Engineering and cost services return assumptions, warnings, provenance, and insufficient-data states instead of invented certainty.","textPreview":"Engineering and cost services return assumptions, warnings, provenance, and insufficient-data states instead of invented certainty.","textChars":131,"textLines":1,"bbox":[360,513,806,39]}
+{"kind":"shape","id":"sh/gbixkzil","slide":4,"bbox":[42,604,160,26]}
+{"kind":"textbox","id":"sh/hcred4j6","slide":4,"text":"WHY THIS MATTERS","textPreview":"WHY THIS MATTERS","textChars":16,"textLines":1,"bbox":[54,610,136,14]}
+{"kind":"textbox","id":"sh/u90fip0f","slide":4,"text":"The model makes capture conversational. The system makes results auditable. That is what lets AI participate in a high-trust home decision without becoming the final authority.","textPreview":"The model makes capture conversational. The system makes results auditable. That is what lets AI participate in a high-trust home decisio...","textChars":176,"textLines":1,"bbox":[222,608,974,35]}
+{"kind":"notes","id":"nt/m8owhf","slide":4,"text":"Technical proof for judges: native RoomPlan capture and USDZ backup, direct Realtime PCM transport with server-minted ephemeral secrets, bounded consumer-capability policy, Zod-validated SiteGraph events, evidence registry, deterministic engineering and cost contracts, explicit insufficient_data and partial-range states, and regression checks. This directly addresses technical sophistication and reliability in the official DNHacks rubric: https://portal.dnhacks.org/e/2026/judging"}
+{"kind":"slide","id":"sl/r0zweb","slide":5,"title":"05","textShapes":15}
+{"kind":"shape","id":"sh/wva14r6x","slide":5,"bbox":[0,0,1280,16]}
+{"kind":"textbox","id":"sh/vu10v6pc","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[42,39,50,26]}
+{"kind":"textbox","id":"sh/utsj21or","slide":5,"text":"The EV charger is the wedge. The home is the platform.","textPreview":"The EV charger is the wedge. The home is the platform.","textChars":54,"textLines":1,"bbox":[42,72,920,68]}
+{"kind":"textbox","id":"sh/503i1g7e","slide":5,"text":"The same evidence layer can make more of the home understandable before a purchase or proposal.","textPreview":"The same evidence layer can make more of the home understandable before a purchase or proposal.","textChars":95,"textLines":1,"bbox":[42,145,950,42]}
+{"kind":"shape","id":"sh/4zu18b6t","slide":5,"bbox":[42,686,1196,1]}
+{"kind":"textbox","id":"sh/jy10z6p8","slide":5,"text":"SITEGRAPH  |  DNHACKS 2026","textPreview":"SITEGRAPH  |  DNHACKS 2026","textChars":26,"textLines":1,"bbox":[42,696,330,14]}
+{"kind":"textbox","id":"sh/ixsj61o3","slide":5,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[1210,696,28,14]}
+{"kind":"shape","id":"sh/to325g7q","slide":5,"bbox":[42,245,366,290]}
+{"kind":"shape","id":"sh/snu1cb65","slide":5,"bbox":[66,271,78,26]}
+{"kind":"textbox","id":"sh/e5or6hg7","slide":5,"text":"NOW","textPreview":"NOW","textChars":3,"textLines":1,"bbox":[78,277,54,14]}
+{"kind":"textbox","id":"sh/f6h8zmhs","slide":5,"text":"EV charger\nplanning","textPreview":"EV charger | planning","textChars":19,"textLines":2,"bbox":[66,324,290,62]}
+{"kind":"textbox","id":"sh/g7q98ryx","slide":5,"text":"Capture spatial context, model a route, and surface a transparent planning range.","textPreview":"Capture spatial context, model a route, and surface a transparent planning range.","textChars":81,"textLines":1,"bbox":[66,411,300,82]}
+{"kind":"shape","id":"sh/18zq1cfi","slide":5,"bbox":[450,245,366,290]}
+{"kind":"shape","id":"sh/298rahg3","slide":5,"bbox":[474,271,78,26]}
+{"kind":"textbox","id":"sh/3ah83mxo","slide":5,"text":"NEXT","textPreview":"NEXT","textChars":4,"textLines":1,"bbox":[486,277,54,14]}
+{"kind":"textbox","id":"sh/obq9cry9","slide":5,"text":"Quote-ready\ncomparisons","textPreview":"Quote-ready | comparisons","textChars":23,"textLines":2,"bbox":[474,324,290,62]}
+{"kind":"textbox","id":"sh/pczq5wfu","slide":5,"text":"Normalize scope, assumptions, exclusions, and questions across contractor proposals.","textPreview":"Normalize scope, assumptions, exclusions, and questions across contractor proposals.","textChars":84,"textLines":1,"bbox":[474,411,300,82]}
+{"kind":"shape","id":"sh/id47yxgz","slide":5,"bbox":[858,245,366,290]}
+{"kind":"shape","id":"sh/jex8r2hk","slide":5,"bbox":[882,271,78,26]}
+{"kind":"textbox","id":"sh/7itozyxc","slide":5,"text":"THEN","textPreview":"THEN","textChars":4,"textLines":1,"bbox":[894,277,54,14]}
+{"kind":"textbox","id":"sh/mhknqtwr","slide":5,"text":"Home project\nintelligence","textPreview":"Home project | intelligence","textChars":25,"textLines":2,"bbox":[882,324,290,62]}
+{"kind":"textbox","id":"sh/9kb61of2","slide":5,"text":"Apply the same record to electrification, remodels, additions, and adjacent-room changes.","textPreview":"Apply the same record to electrification, remodels, additions, and adjacent-room changes.","textChars":89,"textLines":1,"bbox":[882,411,300,82]}
+{"kind":"shape","id":"sh/8j25s3ex","slide":5,"bbox":[370,387,48,4]}
+{"kind":"shape","id":"sh/zu9ovex0","slide":5,"bbox":[778,387,48,4]}
+{"kind":"textbox","id":"sh/yt0nm9wf","slide":5,"text":"The goal: make each project more legible before homeowners commit time or money.","textPreview":"The goal: make each project more legible before homeowners commit time or money.","textChars":80,"textLines":1,"bbox":[42,586,1090,40]}
+{"kind":"notes","id":"nt/r0zweb","slide":5,"text":"Future: quote comparison and broader home-project intelligence are product directions, not current features. The demonstrated foundation is structured evidence and explicit uncertainty."}
+{"kind":"slide","id":"sl/9lopkj","slide":6,"title":"06","textShapes":17}
+{"kind":"shape","id":"sh/fa94zi18","slide":6,"bbox":[0,0,1280,16]}
+{"kind":"textbox","id":"sh/gbi5sn2t","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[42,39,50,26]}
+{"kind":"textbox","id":"sh/1wrm1sje","slide":6,"text":"Our product ethic: clarity without false certainty.","textPreview":"Our product ethic: clarity without false certainty.","textChars":51,"textLines":1,"bbox":[42,72,920,68]}
+{"kind":"textbox","id":"sh/65gnmdkr","slide":6,"text":"SiteGraph should make the homeowner more capable while keeping professional boundaries clear.","textPreview":"SiteGraph should make the homeowner more capable while keeping professional boundaries clear.","textChars":93,"textLines":1,"bbox":[42,145,950,42]}
+{"kind":"shape","id":"sh/r6p4vi1c","slide":6,"bbox":[42,686,1196,1]}
+{"kind":"textbox","id":"sh/s7i5on2x","slide":6,"text":"SITEGRAPH  |  DNHACKS 2026","textPreview":"SITEGRAPH  |  DNHACKS 2026","textChars":26,"textLines":1,"bbox":[42,696,330,14]}
+{"kind":"textbox","id":"sh/t8rmx8j2","slide":6,"text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[1210,696,28,14]}
+{"kind":"shape","id":"sh/q1knyx0v","slide":6,"bbox":[42,238,92,92]}
+{"kind":"textbox","id":"sh/b2t4721g","slide":6,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[42,263,92,32]}
+{"kind":"textbox","id":"sh/nqt8zuhw","slide":6,"text":"Evidence over theater","textPreview":"Evidence over theater","textChars":21,"textLines":1,"bbox":[172,243,400,28]}
+{"kind":"textbox","id":"sh/2pk76p0b","slide":6,"text":"Every recommendation carries its inputs, source, assumptions, and unresolved checks.","textPreview":"Every recommendation carries its inputs, source, assumptions, and unresolved checks.","textChars":84,"textLines":1,"bbox":[172,281,620,48]}
+{"kind":"shape","id":"sh/psbq14z2","slide":6,"bbox":[818,256,386,58]}
+{"kind":"textbox","id":"sh/or2p8zih","slide":6,"text":"“Show me why.”","textPreview":"“Show me why.”","textChars":14,"textLines":1,"bbox":[842,273,338,22]}
+{"kind":"shape","id":"sh/bet83eh8","slide":6,"bbox":[42,364,92,92]}
+{"kind":"textbox","id":"sh/adkra90n","slide":6,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[42,389,92,32]}
+{"kind":"textbox","id":"sh/xgvq5oze","slide":6,"text":"Education without upsell","textPreview":"Education without upsell","textChars":24,"textLines":1,"bbox":[172,369,400,28]}
+{"kind":"textbox","id":"sh/cf29cjit","slide":6,"text":"We explain the project in plain language so homeowners can compare options on their terms.","textPreview":"We explain the project in plain language so homeowners can compare options on their terms.","textChars":90,"textLines":1,"bbox":[172,407,620,48]}
+{"kind":"shape","id":"sh/zid87eh4","slide":6,"bbox":[818,382,386,58]}
+{"kind":"textbox","id":"sh/yh4re90j","slide":6,"text":"“Help me compare.”","textPreview":"“Help me compare.”","textChars":18,"textLines":1,"bbox":[842,399,338,22]}
+{"kind":"shape","id":"sh/udob6dkr","slide":6,"bbox":[42,490,92,92]}
+{"kind":"textbox","id":"sh/vexszi1c","slide":6,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[42,515,92,32]}
+{"kind":"textbox","id":"sh/gf6t8n2x","slide":6,"text":"Respect the boundary","textPreview":"Respect the boundary","textChars":20,"textLines":1,"bbox":[172,495,400,28]}
+{"kind":"textbox","id":"sh/hgzu1sji","slide":6,"text":"We surface the questions. Licensed professionals make the decisions that require them.","textPreview":"We surface the questions. Licensed professionals make the decisions that require them.","textChars":86,"textLines":1,"bbox":[172,533,620,48]}
+{"kind":"shape","id":"sh/m9ob2dkv","slide":6,"bbox":[818,508,386,58]}
+{"kind":"textbox","id":"sh/7axsvi1g","slide":6,"text":"“Tell me what I still need.”","textPreview":"“Tell me what I still need.”","textChars":28,"textLines":1,"bbox":[842,525,338,22]}
+{"kind":"notes","id":"nt/9lopkj","slide":6,"text":"Ethos: democratize access to difficult home information, but do it honestly. Provenance, scope boundaries, and professional checks are product features, not disclaimers added at the end."}
+{"kind":"slide","id":"sl/s3sy65","slide":7,"title":"SITEGRAPH","textShapes":9}
+{"kind":"textbox","id":"sh/nulc3yh4","slide":7,"text":"SITEGRAPH","textPreview":"SITEGRAPH","textChars":9,"textLines":1,"bbox":[52,52,200,26]}
+{"kind":"textbox","id":"sh/ovedc3yp","slide":7,"text":"Every homeowner deserves\na clear view of the project\ninside their walls.","textPreview":"Every homeowner deserves | a clear view of the project | inside their walls.","textChars":72,"textLines":3,"bbox":[52,133,660,210]}
+{"kind":"textbox","id":"sh/9gnu58za","slide":7,"text":"We are building the planning layer that makes hard home decisions easier to understand, safer to question, and harder to price unfairly.","textPreview":"We are building the planning layer that makes hard home decisions easier to understand, safer to question, and harder to price unfairly.","textChars":136,"textLines":1,"bbox":[56,390,580,82]}
+{"kind":"shape","id":"sh/epcb6tgn","slide":7,"bbox":[56,520,130,26]}
+{"kind":"textbox","id":"sh/zqlczeh8","slide":7,"text":"DNHACKS 2026","textPreview":"DNHACKS 2026","textChars":12,"textLines":1,"bbox":[68,526,106,14]}
+{"kind":"textbox","id":"sh/0rut8jyt","slide":7,"text":"Thank you","textPreview":"Thank you","textChars":9,"textLines":1,"bbox":[56,574,250,42]}
+{"kind":"shape","id":"sh/1s3u1ozy","slide":7,"bbox":[795,136,334,334]}
+{"kind":"shape","id":"sh/qlsb290b","slide":7,"bbox":[837,201,250,205]}
+{"kind":"shape","id":"sh/rm1cvehw","slide":7,"bbox":[837,201,250,5]}
+{"kind":"shape","id":"sh/nad8ba5s","slide":7,"bbox":[960,201,5,205]}
+{"kind":"shape","id":"sh/m9472547","slide":7,"bbox":[837,302,250,5]}
+{"kind":"shape","id":"sh/9cvqdkni","slide":7,"bbox":[888,307,5,99]}
+{"kind":"shape","id":"sh/obmp4fmx","slide":7,"bbox":[1005,307,5,99]}
+{"kind":"shape","id":"sh/bex8fu5o","slide":7,"bbox":[865,238,48,48]}
+{"kind":"textbox","id":"sh/ad4r6p43","slide":7,"text":"?","textPreview":"?","textChars":1,"textLines":1,"bbox":[865,247,48,22]}
+{"kind":"shape","id":"sh/x0fqhknu","slide":7,"bbox":[1018,332,45,45]}
+{"kind":"textbox","id":"sh/wf698zm9","slide":7,"text":"EV","textPreview":"EV","textChars":2,"textLines":1,"bbox":[1025,347,32,14]}
+{"kind":"textbox","id":"sh/rit83q5k","slide":7,"text":"A question becomes a plan.","textPreview":"A question becomes a plan.","textChars":26,"textLines":1,"bbox":[830,513,290,24]}
+{"kind":"shape","id":"sh/qhk7uloz","slide":7,"bbox":[0,686,1280,2]}
+{"kind":"textbox","id":"sh/uxsbiton","slide":7,"text":"sitegraph  |  spatial evidence for better home decisions","textPreview":"sitegraph  |  spatial evidence for better home decisions","textChars":56,"textLines":1,"bbox":[52,696,670,14]}
+{"kind":"notes","id":"nt/s3sy65","slide":7,"text":"Close: SiteGraph helps homeowners go from a question to a transparent plan. We start with EV charging and build toward a more legible home."}

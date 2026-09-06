@@ -62,7 +62,7 @@ export function evaluateMechanicalAssessmentGate(
       .map((fact) => fact.field),
   );
   if (!panelFactFields.has('service_amps') || !panelFactFields.has('spare_breaker_spaces')) {
-    return { status: 'needs_input', nextAction: 'confirm_panel_facts', message: 'Confirm visible service amps and spare breaker spaces from the panel image. You may record an approximation for planning, but it cannot unlock an engineering recommendation.' };
+    return { status: 'needs_input', nextAction: 'confirm_panel_facts', message: 'Ask for each missing panel fact and whether the user knows it or is approximating. A supplied approximation can support a planning-only deterministic result with a professional-verification disclaimer.' };
   }
 
   const panelLocation = graph.spatialLocations.find((location) => location.kind === 'electrical_panel' && evidenceExists(graph, location.evidenceIds));

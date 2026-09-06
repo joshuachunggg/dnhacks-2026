@@ -299,6 +299,13 @@ struct DemoInstallerHandoff: Codable {
     let bullets: [String]
 }
 
+struct SpatialVisuals {
+    var panelPose: SpatialModelPose?
+    var evsePose: SpatialModelPose?
+    var routePoses: [SpatialModelPose] = []
+    var candidateOpeningPose: SpatialModelPose?
+}
+
 @MainActor
 final class SiteGraphDemoViewModel: ObservableObject {
     private static let demoServerBaseURL = "http://192.168.1.121:3000"
@@ -309,8 +316,9 @@ final class SiteGraphDemoViewModel: ObservableObject {
     @Published var propertyAddress: String
     @Published var vehicleIntent: String
     @Published var chargingIntent: String
+    @Published var assessmentFocus: AssessmentFocus
     @Published var realtimeDemoToken: String
-    @Published private(set) var engineeringStatus = "Fixture fallback active. Connect a server to run the deterministic assessment."
+    @Published private(set) var engineeringStatus = "Enter the property address to begin the assessment."
     @Published private(set) var engineeringStatusIsError = false
     @Published private(set) var isRunningEngineeringScenario = false
     @Published private(set) var isUsingFixtureFallback = true
@@ -318,14 +326,20 @@ final class SiteGraphDemoViewModel: ObservableObject {
     @Published private(set) var visionStatus = "Capture a panel frame after scanning the room to create reviewable visual evidence."
     @Published private(set) var latestPanelEvidenceId: String?
     @Published private(set) var collectedSpatialSummary = "Panel, EVSE, and route locations have not been recorded."
+    @Published private(set) var spatialVisuals = SpatialVisuals()
 
     private let fixtureName = "modern-200a"
     private var fixtureData: Data?
     private var liveAssessmentId: String?
     private var latestSpatialCapture: SpatialCapturePayload?
+    private var spatialCaptureAssessmentId: String?
 
     var roomModelURL: URL? {
-        latestSpatialCapture?.artifacts.first(where: { $0.kind == .roomUSDZ })?.localFileURL
+        guard let artifact = latestSpatialCapture?.artifacts.first(where: { $0.kind == .roomUSDZ }),
+              LocalSpatialArtifactStore.isRetained(artifact) else {
+            return nil
+        }
+        return artifact.localFileURL
     }
 
     var spatialCapturePayload: SpatialCapturePayload? {
@@ -348,20 +362,13 @@ final class SiteGraphDemoViewModel: ObservableObject {
         propertyAddress = ""
         vehicleIntent = ""
         chargingIntent = ""
+        assessmentFocus = .evCharger
         realtimeDemoToken = defaults.string(forKey: PreferenceKey.realtimeDemoToken) ?? ""
         latestSpatialCapture = Self.loadSavedSpatialCapture(from: defaults)
         clearAssessment()
     }
 
-    var actionTitle: String { snapshot == nil ? "Load demo fixture" : "Clear assessment" }
-
     var hasSpatialCapture: Bool { latestSpatialCapture != nil }
-
-    var actionSubtitle: String {
-        snapshot == nil
-            ? "Load the bundled modern-200A fixture only when you need the demo fallback."
-            : "Remove the current assessment data and return to the blank start state."
-    }
 
     func saveEngineeringIntent() {
         defaults.set(serverBaseURL, forKey: PreferenceKey.serverBaseURL)
@@ -384,7 +391,8 @@ final class SiteGraphDemoViewModel: ObservableObject {
                 assessmentContext: RealtimeAssessmentContext(
                     propertyAddress: address.isEmpty ? snapshot?.site.address ?? "Not provided" : address,
                     vehicleIntent: vehicleIntent,
-                    chargingIntent: chargingIntent
+                    chargingIntent: chargingIntent,
+                    assessmentFocus: assessmentFocus
                 )
             )
         } catch {
@@ -392,11 +400,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
         }
     }
 
-    func toggleDemoFixture() {
-        if snapshot == nil {
-            loadSeededAssessment()
-            return
-        }
+    func startNewAssessment() {
         clearAssessment()
     }
 
@@ -412,9 +416,11 @@ final class SiteGraphDemoViewModel: ObservableObject {
             fixtureData = data
             loadError = nil
             liveAssessmentId = nil
-            latestSpatialCapture = nil
+            spatialCaptureAssessmentId = nil
             isUsingFixtureFallback = false
-            engineeringStatus = "Property address recorded as user-supplied. Capture the room and panel before requesting an assessment."
+            engineeringStatus = latestSpatialCapture == nil
+                ? "Property address recorded as user-supplied. Capture the room and panel before requesting an assessment."
+                : "Property address recorded as user-supplied. The saved RoomPlan model will be attached to this assessment before panel evidence or placements are recorded."
             engineeringStatusIsError = false
             saveEngineeringIntent()
         } catch {
@@ -427,6 +433,8 @@ final class SiteGraphDemoViewModel: ObservableObject {
         fixtureData = nil
         loadError = nil
         liveAssessmentId = nil
+        spatialCaptureAssessmentId = nil
+        spatialVisuals = SpatialVisuals()
         propertyAddress = ""
         vehicleIntent = ""
         chargingIntent = ""
@@ -435,7 +443,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
             : "Saved RoomPlan model restored on this device."
         visionStatus = "Capture a panel frame after scanning the room to create reviewable visual evidence."
         isUsingFixtureFallback = false
-        engineeringStatus = "Start by entering the property address. Load demo fixture remains available as an explicit fallback."
+        engineeringStatus = "Enter the property address to begin the assessment."
         engineeringStatusIsError = false
     }
 
@@ -448,6 +456,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
             loadError = nil
             isUsingFixtureFallback = true
             liveAssessmentId = nil
+            spatialCaptureAssessmentId = nil
             engineeringStatus = "Fixture fallback active. The bundled seeded assessment is shown until a server tool run succeeds."
             engineeringStatusIsError = false
         } catch {
@@ -460,14 +469,15 @@ final class SiteGraphDemoViewModel: ObservableObject {
         }
     }
 
-    func runEngineeringScenario() async {
+    @discardableResult
+    func runEngineeringScenario() async -> Bool {
         guard snapshot != nil, let fixtureData else {
             setEngineeringError("The seeded assessment must load before a server tool run can be requested.")
-            return
+            return false
         }
         guard let baseURL = normalizedServerURL else {
             setEngineeringError("Enter a reachable server URL. The fixture fallback remains visible.")
-            return
+            return false
         }
 
         saveEngineeringIntent()
@@ -476,24 +486,31 @@ final class SiteGraphDemoViewModel: ObservableObject {
 
         do {
             let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
-            let response: LiveAssessmentResponse = try await send(
-                EngineeringRequestBuilder.engineeringToolRunRequest(
+            let gateResponse: MechanicalAssessmentGateResponse = try await send(
+                EngineeringRequestBuilder.assessmentGateRequest(
                     baseURL: baseURL,
                     assessmentId: assessmentId
                 )
             )
+            guard gateResponse.gate.status == "ready", let gatedAssessment = gateResponse.assessment else {
+                engineeringStatus = gateResponse.gate.message ?? "Complete the missing evidence before finishing and reviewing the assessment."
+                engineeringStatusIsError = true
+                return false
+            }
             let costResponse: LiveAssessmentResponse = try await send(
                 EngineeringRequestBuilder.costToolRunRequest(
                     baseURL: baseURL,
-                    assessmentId: response.assessment.assessmentId
+                    assessmentId: gatedAssessment.assessmentId
                 )
             )
             self.snapshot = costResponse.assessment
             isUsingFixtureFallback = false
             engineeringStatus = "Server engineering and cost tool runs returned the current assessment. Results below are server-provided."
             engineeringStatusIsError = false
+            return true
         } catch {
             restoreFixtureFallback(after: error)
+            return false
         }
     }
 
@@ -509,25 +526,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
         }
 
         do {
-            let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
-            let serverPayload = try await uploadRoomModel(in: payload, baseURL: baseURL, assessmentId: assessmentId)
-            let event = SpatialCaptureEvent(
-                eventId: "event-\(UUID().uuidString.lowercased())",
-                eventName: .captureRecorded,
-                timestamp: payload.timestamp,
-                producer: "ios-roomplan",
-                payload: serverPayload
-            )
-            let response: LiveAssessmentResponse = try await send(
-                SpatialCaptureRequestBuilder.eventRequest(
-                    baseURL: baseURL,
-                    assessmentId: assessmentId,
-                    event: event
-                )
-            )
-            snapshot = response.assessment
-            isUsingFixtureFallback = false
-            spatialCaptureStatus = "Spatial metadata recorded and the USDZ is backed up to the local Mac. The phone keeps its copy for room inspection."
+            _ = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
         } catch {
             spatialCaptureStatus = "Room model saved locally; Mac backup or metadata recording failed: \(error.localizedDescription). Confirm the phone and Mac share Wi-Fi, then use the Mac LAN URL—not localhost—in the Panel server field."
         }
@@ -575,6 +574,8 @@ final class SiteGraphDemoViewModel: ObservableObject {
     func forgetSavedSpatialCapture() {
         defaults.removeObject(forKey: PreferenceKey.latestSpatialCapture)
         latestSpatialCapture = nil
+        spatialCaptureAssessmentId = nil
+        spatialVisuals = SpatialVisuals()
         spatialCaptureStatus = "Saved RoomPlan model removed from this device."
     }
 
@@ -693,7 +694,32 @@ final class SiteGraphDemoViewModel: ObservableObject {
         let response: LiveAssessmentResponse = try await send(SpatialCaptureRequestBuilder.eventRequest(baseURL: baseURL, assessmentId: assessmentId, event: SpatialLocationConfirmedEvent(eventId: "event-\(UUID().uuidString.lowercased())", timestamp: timestamp, producer: "ios-roomplan-placement", payload: payload)))
         snapshot = response.assessment
         isUsingFixtureFallback = false
+        if request.kind == .electricalPanel {
+            var visuals = spatialVisuals
+            visuals.panelPose = pose
+            spatialVisuals = visuals
+        } else if request.kind == .evse {
+            var visuals = spatialVisuals
+            visuals.evsePose = pose
+            spatialVisuals = visuals
+        }
         collectedSpatialSummary = "Recorded \(request.kind.displayName) on the room model."
+    }
+
+    func previewSpatialPlacement(_ pose: SpatialModelPose, request: SpatialPlacementRequest) {
+        switch request.kind {
+        case .electricalPanel:
+            var visuals = spatialVisuals
+            visuals.panelPose = pose
+            spatialVisuals = visuals
+        case .evse:
+            var visuals = spatialVisuals
+            visuals.evsePose = pose
+            spatialVisuals = visuals
+        case .routePoint, .candidateOpening:
+            return
+        }
+        collectedSpatialSummary = "Showing the proposed \(request.kind.displayName) on the room model while it is saved."
     }
 
     func recordRouteWaypoints(_ poses: [SpatialModelPose]) async throws {
@@ -712,36 +738,52 @@ final class SiteGraphDemoViewModel: ObservableObject {
         let response: LiveAssessmentResponse = try await send(SpatialCaptureRequestBuilder.eventRequest(baseURL: baseURL, assessmentId: assessmentId, event: RouteWaypointsRecordedEvent(eventId: "event-\(UUID().uuidString.lowercased())", timestamp: timestamp, producer: "ios-roomplan-route", payload: payload)))
         snapshot = response.assessment
         isUsingFixtureFallback = false
+        var visuals = spatialVisuals
+        visuals.routePoses = poses
+        spatialVisuals = visuals
         collectedSpatialSummary = "Recorded \(poses.count) route waypoints and derived the route length in feet."
     }
 
-    func confirmPanelFacts(serviceAmps: Int, busRatingAmps: Int?, spareBreakerSpaces: Int, usingApproximation: Bool = false) async throws {
+    func recordConceptualOpening(at pose: SpatialModelPose) {
+        var visuals = spatialVisuals
+        visuals.candidateOpeningPose = pose
+        spatialVisuals = visuals
+        collectedSpatialSummary = "Marked a user-selected candidate opening between the scanned rooms. Structural feasibility remains unverified."
+    }
+
+    func recordPanelFact(_ request: PanelFactRequest) async throws {
         guard let evidenceId = latestPanelEvidenceId,
               let panelId = snapshot?.electricalPanel.id,
               let fixtureData,
               let baseURL = normalizedServerURL else {
-            throw NSError(domain: "SiteGraphDemo", code: 10, userInfo: [NSLocalizedDescriptionKey: "Capture and record a panel photo before confirming panel facts."])
+            throw NSError(domain: "SiteGraphDemo", code: 10, userInfo: [NSLocalizedDescriptionKey: "Capture and record a panel photo before confirming a panel fact."])
         }
         let timestamp = ISO8601DateFormatter().string(from: Date())
-        let provenanceNote = usingApproximation
+        let provenanceNote = request.certainty == .approximation
             ? "User explicitly chose this planning approximation after the panel image could not verify the value. Professional verification remains required."
             : "Value confirmed by the user from the panel evidence image."
-        var facts = [
-            PanelFactPayload(id: "panel-service-\(UUID().uuidString.lowercased())", field: "service_amps", value: serviceAmps, unit: "A", evidenceIds: [evidenceId], timestamp: timestamp, producer: "ios-panel-confirmation", notes: [provenanceNote]),
-            PanelFactPayload(id: "panel-spare-\(UUID().uuidString.lowercased())", field: "spare_breaker_spaces", value: spareBreakerSpaces, unit: nil, evidenceIds: [evidenceId], timestamp: timestamp, producer: "ios-panel-confirmation", notes: [provenanceNote]),
-        ]
-        if let busRatingAmps { facts.append(PanelFactPayload(id: "panel-bus-\(UUID().uuidString.lowercased())", field: "bus_rating_amps", value: busRatingAmps, unit: "A", evidenceIds: [evidenceId], timestamp: timestamp, producer: "ios-panel-confirmation", notes: [provenanceNote])) }
+        let fact = PanelFactPayload(
+            id: "panel-\(request.field.rawValue)-\(UUID().uuidString.lowercased())",
+            field: request.field.rawValue,
+            value: request.value,
+            unit: request.field.unit,
+            evidenceIds: [evidenceId],
+            timestamp: timestamp,
+            producer: "ios-panel-confirmation",
+            notes: [provenanceNote]
+        )
         let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
-        let response: LiveAssessmentResponse = try await send(SpatialCaptureRequestBuilder.eventRequest(baseURL: baseURL, assessmentId: assessmentId, event: PanelFactsConfirmedEvent(eventId: "event-\(UUID().uuidString.lowercased())", timestamp: timestamp, producer: "ios-panel-confirmation", payload: PanelFactsPayload(panelId: panelId, facts: facts))))
+        let response: LiveAssessmentResponse = try await send(SpatialCaptureRequestBuilder.eventRequest(baseURL: baseURL, assessmentId: assessmentId, event: PanelFactsConfirmedEvent(eventId: "event-\(UUID().uuidString.lowercased())", timestamp: timestamp, producer: "ios-panel-confirmation", payload: PanelFactsPayload(panelId: panelId, facts: [fact]))))
         snapshot = response.assessment
         isUsingFixtureFallback = false
-        visionStatus = usingApproximation
-            ? "Planning approximations recorded with the panel-image evidence and explicit user consent. Professional verification remains required."
-            : "Panel facts confirmed from the captured image and linked to its evidence."
+        visionStatus = request.certainty == .approximation
+            ? "Planning approximation for \(request.field.displayName) recorded with the panel-image evidence and explicit user consent. Professional verification remains required."
+            : "\(request.field.displayName) confirmed from the captured image and linked to its evidence."
     }
 
     private func ensureLiveAssessment(baseURL: URL, fixtureData: Data) async throws -> String {
         if let liveAssessmentId {
+            try await syncSpatialCaptureIfNeeded(baseURL: baseURL, assessmentId: liveAssessmentId)
             return liveAssessmentId
         }
         let created: LiveAssessmentResponse = try await send(
@@ -751,7 +793,42 @@ final class SiteGraphDemoViewModel: ObservableObject {
             )
         )
         liveAssessmentId = created.assessment.assessmentId
+        try await syncSpatialCaptureIfNeeded(baseURL: baseURL, assessmentId: created.assessment.assessmentId)
         return created.assessment.assessmentId
+    }
+
+    private func syncSpatialCaptureIfNeeded(baseURL: URL, assessmentId: String) async throws {
+        guard let capture = latestSpatialCapture, spatialCaptureAssessmentId != assessmentId else { return }
+        let serverPayload = try await uploadRoomModel(in: capture, baseURL: baseURL, assessmentId: assessmentId)
+        let event = SpatialCaptureEvent(
+            eventId: "event-\(UUID().uuidString.lowercased())",
+            eventName: .captureRecorded,
+            timestamp: capture.timestamp,
+            producer: "ios-roomplan",
+            payload: serverPayload
+        )
+        let response: LiveAssessmentResponse = try await send(
+            SpatialCaptureRequestBuilder.eventRequest(
+                baseURL: baseURL,
+                assessmentId: assessmentId,
+                event: event
+            )
+        )
+        snapshot = response.assessment
+        isUsingFixtureFallback = false
+        saveSpatialCapture(SpatialCapturePayload(
+            id: capture.id,
+            kind: capture.kind,
+            status: capture.status,
+            coordinateSpaceId: capture.coordinateSpaceId,
+            timestamp: capture.timestamp,
+            producer: capture.producer,
+            detectedObjectTypes: capture.detectedObjectTypes,
+            artifacts: capture.artifacts,
+            evidence: serverPayload.evidence
+        ), resetVisuals: false)
+        spatialCaptureAssessmentId = assessmentId
+        spatialCaptureStatus = "Spatial metadata recorded and the USDZ is backed up to the local Mac. The phone keeps its copy for room inspection."
     }
 
     private func restoreFixtureFallback(after error: Error) {
@@ -771,8 +848,12 @@ final class SiteGraphDemoViewModel: ObservableObject {
         }
     }
 
-    private func saveSpatialCapture(_ payload: SpatialCapturePayload) {
+    private func saveSpatialCapture(_ payload: SpatialCapturePayload, resetVisuals: Bool = true) {
         latestSpatialCapture = payload
+        spatialCaptureAssessmentId = nil
+        if resetVisuals {
+            spatialVisuals = SpatialVisuals()
+        }
         do {
             defaults.set(try JSONEncoder().encode(payload), forKey: PreferenceKey.latestSpatialCapture)
         } catch {
@@ -830,11 +911,15 @@ final class SiteGraphDemoViewModel: ObservableObject {
         assessment["spatialCaptures"] = []
         assessment["visualFrames"] = []
         assessment["spatialObjects"] = []
+        // The imminent demo is scoped to Hyde Park, Austin. This permits the
+        // deterministic cost calculator to use its City of Austin fee anchor;
+        // it remains a planning range pending AHJ confirmation.
         assessment["site"] = [
             "id": "site-\(UUID().uuidString.lowercased())",
             "label": "Property assessment",
             "address": address,
-            "jurisdiction": ["city": "Unknown", "county": "Unknown", "state": "Unknown", "ahj": "Unknown"],
+            "jurisdiction": ["city": "Austin", "county": "Travis", "state": "TX", "ahj": "City of Austin"],
+            "utility": "Austin Energy",
         ]
         assessment["proposedEvseLocation"] = [
             "id": "evse-\(UUID().uuidString.lowercased())",
@@ -879,6 +964,16 @@ final class SiteGraphDemoViewModel: ObservableObject {
 
 private struct LiveAssessmentResponse: Decodable {
     let assessment: SiteGraphDemoSnapshot
+}
+
+private struct MechanicalAssessmentGateResponse: Decodable {
+    let gate: MechanicalAssessmentGate
+    let assessment: SiteGraphDemoSnapshot?
+}
+
+private struct MechanicalAssessmentGate: Decodable {
+    let status: String
+    let message: String?
 }
 
 private struct LocalArtifactUploadResponse: Decodable {
