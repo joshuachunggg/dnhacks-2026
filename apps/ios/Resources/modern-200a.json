@@ -2,6 +2,11 @@
   "schemaVersion": "0.1.0",
   "assessmentId": "assessment-modern-200a",
   "spatialCaptures": [],
+  "visualFrames": [],
+  "spatialObjects": [],
+  "spatialLocations": [],
+  "routeWaypoints": [],
+  "panelFactConfirmations": [],
   "site": {
     "id": "site-modern-200a",
     "label": "Modern 200 A home",

@@ -181,3 +181,53 @@ Append-only log template:
 - Reason: This proves the RoomPlan capture-to-contract path within the hackathon window without making false durability or remote-agent-readability claims.
 - Consequences: `local://` artifact references are local-only; the server retains capture metadata, integrity information, and linked evidence but cannot serve model bytes. Durable upload and opaque server-readable references are required before an agent may inspect room geometry remotely.
 - Revisit trigger: A durable artifact provider and server-issued upload/commit contract are configured and physically validated.
+
+### 0018
+- ID: 0018
+- Date: 2026-09-05
+- Status: locked for the Realtime demo boundary
+- Decision: Mint short-lived Realtime client secrets on the server and require a separate rotatable demo token from the phone.
+- Context: A physical device needs direct low-latency transport but must never receive the long-lived OpenAI API key.
+- Reason: The additional demo token prevents the local endpoint from becoming an unauthenticated ephemeral-key oracle while retaining a small hackathon setup surface.
+- Consequences: Local live testing requires both `OPENAI_API_KEY` and `REALTIME_DEMO_TOKEN`; the phone stores only the demo token and an ephemeral secret for one connection.
+- Revisit trigger: Production authentication or device attestation replaces the demo token.
+
+### 0019
+- ID: 0019
+- Date: 2026-09-05
+- Status: reversible
+- Decision: Use direct PCM audio events on the native Realtime WebSocket client for the demo voice path.
+- Context: The existing native client used local speech recognition plus system text-to-speech, which was not a speech-to-speech Realtime experience.
+- Reason: The client-secret boundary and WebSocket transport already exist; direct 24 kHz PCM streaming produces Realtime-generated audio without adding a WebRTC dependency during the demo window.
+- Consequences: The session is audio-only with manual push-to-talk, and the client must convert microphone input and schedule returned PCM playback. A WebRTC migration remains appropriate if low-latency media and interruption handling need production hardening.
+- Revisit trigger: Physical-device audio quality or interruption behavior is unacceptable, or a supported WebRTC client transport is introduced.
+
+### 0020
+- ID: 0020
+- Date: 2026-09-05
+- Status: locked for the demo path
+- Decision: Keep Realtime conversation open-ended while exposing only typed, anticipated consumer capabilities; initially, only `level_2_ev_charger` is supported.
+- Context: A natural conversation should not imply that the product can assess or implement arbitrary home-energy systems.
+- Reason: A server-owned typed allowlist and explicit unsupported response align consumer expectations with reviewed SiteGraph contracts and available deterministic tools.
+- Consequences: The guide can discuss a new Level 2 EV charger naturally, but must decline unsupported requests such as Tesla Powerwall 3 installation. Adding a consumer capability requires a new typed allowlist entry plus reviewed tool/event and implementation coverage.
+- Revisit trigger: A new consumer capability has an approved typed contract, validated implementation, and acceptance coverage.
+
+### 0021
+- ID: 0021
+- Date: 2026-09-05
+- Status: locked for the demo path
+- Decision: Run RoomPlan as a short completed scan before opening the live Realtime camera assistant.
+- Context: `RoomCaptureView` owns an AR/camera session, while the assistant needs a stable regular camera preview for still evidence capture alongside push-to-talk audio.
+- Reason: Sequential capture avoids competing camera sessions while preserving a continuous user flow from spatial scan to conversational evidence collection.
+- Consequences: The live assistant is enabled only after a RoomPlan capture exists. It has a regular camera preview, tap-start/tap-stop voice control, and photo capture that reuses the validated panel-frame path. It does not stream RoomPlan geometry to the agent.
+- Revisit trigger: A reviewed, physically tested shared AR/camera session can preserve RoomPlan fidelity and reliable still-photo capture without threatening the demo path.
+
+### 0022
+- ID: 0022
+- Date: 2026-09-06
+- Status: locked for the local demo backup path
+- Decision: Copy each RoomPlan USDZ from the iPhone to a verified, ignored filesystem directory on the development Mac before recording its metadata manifest.
+- Context: Cleaning iOS build/app data loses the phone-only RoomPlan artifact, while the demo needs a reviewable copy without introducing cloud storage or claiming a production artifact service.
+- Reason: A narrow assessment-scoped upload endpoint can atomically write the USDZ, recompute its digest and length, and return a `local-mac://` reference that the phone verifies before submitting canonical metadata.
+- Consequences: Default bytes live under `data/spatial-artifacts/<assessmentId>/` (override with `SPATIAL_ARTIFACTS_DIR`), are ignored by Git, and persist across iOS app/build cleanup. The endpoint is trusted local-development/LAN infrastructure only; it does not authorize public download or agent retrieval.
+- Revisit trigger: An authenticated durable artifact provider and an authorized read contract are physically accepted.

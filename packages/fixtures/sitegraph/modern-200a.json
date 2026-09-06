@@ -2,6 +2,11 @@
   "schemaVersion": "0.1.0",
   "assessmentId": "assessment-modern-200a",
   "spatialCaptures": [],
+  "visualFrames": [],
+  "spatialObjects": [],
+  "spatialLocations": [],
+  "routeWaypoints": [],
+  "panelFactConfirmations": [],
   "evidence": [
     { "id": "frame-001", "type": "image_frame", "label": "Garage west wall capture" },
     { "id": "frame-010", "type": "image_frame", "label": "Main panel capture" },

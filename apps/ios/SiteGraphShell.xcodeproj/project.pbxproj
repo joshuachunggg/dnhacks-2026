@@ -15,6 +15,10 @@
 		A10000000000000000000007 /* LocalSpatialArtifactStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* LocalSpatialArtifactStore.swift */; };
 		A10000000000000000000008 /* RoomPlanCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000019 /* RoomPlanCaptureView.swift */; };
 		A10000000000000000000009 /* RoomModelQuickLookPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* RoomModelQuickLookPreview.swift */; };
+		A1000000000000000000000A /* PanelEvidenceCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000B /* PanelEvidenceCaptureView.swift */; };
+		A1000000000000000000000C /* RealtimeSessionClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000D /* RealtimeSessionClient.swift */; };
+		A1000000000000000000000E /* RealtimeVoiceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000F /* RealtimeVoiceCard.swift */; };
+		A100000000000000000000A1 /* LiveAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000000000000000000A2 /* LiveAssistantView.swift */; };
 		A10000000000000000000004 /* modern-200a.json in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000015 /* modern-200a.json */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +31,10 @@
 		A10000000000000000000018 /* LocalSpatialArtifactStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSpatialArtifactStore.swift; sourceTree = "<group>"; };
 		A10000000000000000000019 /* RoomPlanCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanCaptureView.swift; sourceTree = "<group>"; };
 		A10000000000000000000020 /* RoomModelQuickLookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomModelQuickLookPreview.swift; sourceTree = "<group>"; };
+		A1000000000000000000000B /* PanelEvidenceCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelEvidenceCaptureView.swift; sourceTree = "<group>"; };
+		A1000000000000000000000D /* RealtimeSessionClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeSessionClient.swift; sourceTree = "<group>"; };
+		A1000000000000000000000F /* RealtimeVoiceCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeVoiceCard.swift; sourceTree = "<group>"; };
+		A100000000000000000000A2 /* LiveAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveAssistantView.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* SiteGraphShell.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SiteGraphShell.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000015 /* modern-200a.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = modern-200a.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -62,6 +70,10 @@
 				A10000000000000000000018 /* LocalSpatialArtifactStore.swift */,
 				A10000000000000000000019 /* RoomPlanCaptureView.swift */,
 				A10000000000000000000020 /* RoomModelQuickLookPreview.swift */,
+				A1000000000000000000000B /* PanelEvidenceCaptureView.swift */,
+				A1000000000000000000000D /* RealtimeSessionClient.swift */,
+				A1000000000000000000000F /* RealtimeVoiceCard.swift */,
+				A100000000000000000000A2 /* LiveAssistantView.swift */,
 			);
 			path = "";
 			sourceTree = "<group>";
@@ -158,6 +170,10 @@
 				A10000000000000000000007 /* LocalSpatialArtifactStore.swift in Sources */,
 				A10000000000000000000008 /* RoomPlanCaptureView.swift in Sources */,
 				A10000000000000000000009 /* RoomModelQuickLookPreview.swift in Sources */,
+				A1000000000000000000000A /* PanelEvidenceCaptureView.swift in Sources */,
+				A1000000000000000000000C /* RealtimeSessionClient.swift in Sources */,
+				A1000000000000000000000E /* RealtimeVoiceCard.swift in Sources */,
+				A100000000000000000000A1 /* LiveAssistantView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -216,11 +232,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 239WF2VH7J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteGraph;
 				INFOPLIST_KEY_NSCameraUsageDescription = "SiteGraph uses the camera to capture room geometry and panel evidence for a preliminary EV charger assessment.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SiteGraph uses the microphone so you can speak with the field-assessment guide while scanning.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "SiteGraph transcribes your spoken assessment questions on this device before sending them to the realtime guide.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -243,11 +261,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 239WF2VH7J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SiteGraph;
 				INFOPLIST_KEY_NSCameraUsageDescription = "SiteGraph uses the camera to capture room geometry and panel evidence for a preliminary EV charger assessment.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SiteGraph uses the microphone so you can speak with the field-assessment guide while scanning.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "SiteGraph transcribes your spoken assessment questions on this device before sending them to the realtime guide.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (

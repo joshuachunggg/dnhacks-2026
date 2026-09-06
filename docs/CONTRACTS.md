@@ -28,6 +28,10 @@ Primary source lives in `packages/schemas/src/sitegraph.ts` and exports:
 - `SpatialArtifactSchema`
 - `SpatialCaptureSchema`
 - `SpatialCaptureRecordedEventSchema`
+- `VisualFrameSchema`
+- `VisualFrameRecordedEventSchema`
+- `SpatialObjectSchema`
+- `SpatialObjectProposedEventSchema`
 - `MeasurementRecordedEventSchema`
 - `EvseLocationConfirmedEventSchema`
 - `AssessmentEventSchema`
@@ -98,11 +102,28 @@ The current first server boundary accepts and returns only validated JSON:
 - `POST /api/assessments`
 - `GET /api/assessments/:id`
 - `POST /api/assessments/:id/events`
+- `POST /api/assessments/:id/artifacts/:artifactId`
 - `POST /api/assessments/:id/tools/:toolName`
 
-`POST /api/assessments/:id/events` accepts the validated `AssessmentEventSchema` union: `observation.added`, `spatial.capture.recorded`, `measurement.recorded`, and `evse_location.confirmed`. A spatial capture stores typed metadata only: capture identity, coordinate-space ID, producer/version, and immutable artifact descriptors (kind, content type, byte length, SHA-256, and URI). It never accepts a binary artifact body. The server appends evidence references from the manifest, replaces spatial captures by stable ID, replaces measurements by stable ID, and replaces the proposed EVSE location only through the explicit confirmation event. It returns `400 validation_error` for malformed input or `404 assessment_not_found` for an unknown assessment.
+`POST /api/assessments/:id/events` accepts the validated `AssessmentEventSchema` union: `observation.added`, `spatial.capture.recorded`, `visual.frame.recorded`, `spatial.object.proposed`, `measurement.recorded`, and `evse_location.confirmed`. A spatial capture stores typed metadata only: capture identity, coordinate-space ID, producer/version, aggregated RoomPlan object categories/counts, and immutable artifact descriptors (kind, content type, byte length, SHA-256, and URI). Object categories are RoomPlan classifications, not electrically authoritative facts. A visual-frame event similarly records a panel-image descriptor and image-frame evidence; it never accepts image bytes. A proposed spatial object records a normalized image detection and a position in the RoomPlan coordinate space, but cannot become an authoritative engineering input until a separate user-confirmation flow is added. The server appends evidence references from capture/frame events and replaces same-ID captures, frames, objects, and measurements idempotently. It returns `400 validation_error` for malformed input or `404 assessment_not_found` for an unknown assessment.
 
-This boundary is the future agent-tool read/write surface: agent tools must fetch the validated assessment and may submit only the same event union. Agent code cannot dereference a device-local artifact URI; a future durable artifact adapter must resolve an opaque server-issued artifact reference before such bytes become tool-readable.
+`spatial.location.confirmed` persists a user-selected panel or EVSE pose with one coordinate space, status/source, and resolvable evidence IDs. `route.waypoints.recorded` persists at least two confirmed, evidence-backed user-selected waypoints in one coordinate space and deterministically records a linked `route_length` measurement in feet. `panel.facts.confirmed` records user confirmation of visible service amps, optional bus rating, and spare breaker spaces as individual evidence-linked facts, then updates the calculator-facing panel summary atomically. A panel image remains evidence rather than a trusted rating.
+
+`POST /api/assessments/:id/assessment-gate` returns exactly one typed missing-input action until panel image, confirmed panel facts, confirmed panel/EVSE locations, and a derived feet-based route measurement are present and evidence-resolved. Only then does it invoke and persist the canonical deterministic engineering result, returning it with `finish_and_review`. Realtime receives this endpoint's typed payload through `check_mechanical_assessment_gate` and must explain only that result plus its next action.
+
+An unavailable panel value may be retained as a clearly labeled planning approximation in a future UI, but it is not evidence-backed and must not satisfy the gate or unlock a deterministic feasibility recommendation. This preserves an approximate interview path without presenting a guessed electrical rating as an engineering fact.
+
+`POST /api/assessments/:id/artifacts/:artifactId` accepts only one RoomPlan USDZ (`model/vnd.usdz+zip`) for an existing assessment, rejects empty or over-100 MiB bodies, computes its byte length and SHA-256 on the Mac, and atomically writes it to `data/spatial-artifacts/:assessmentId/:artifactId.usdz` by default (or `SPATIAL_ARTIFACTS_DIR`). It returns a server-owned `local-mac://` descriptor; iOS compares that digest and length with its retained phone copy before posting the metadata manifest. This is a trusted local-development/LAN backup boundary, not production authorization, public artifact hosting, or a Realtime agent retrieval surface.
+
+## Realtime session boundary
+
+`POST /api/realtime/session` mints a short-lived OpenAI Realtime client secret for an assessment. The phone supplies its `assessmentId`, a typed `assessmentContext` (`propertyAddress`, `vehicleIntent`, and `chargingIntent`), and a separate `REALTIME_DEMO_TOKEN`; the server requires that token plus `OPENAI_API_KEY`, hashes the assessment into `OpenAI-Safety-Identifier`, and returns only the ephemeral secret, expiry, and upstream session ID. The API key never reaches the iPhone. The minted session is constrained to `gpt-realtime-2.1-mini` and a direct PCM audio conversation. The session policy treats supplied context as known facts and must not ask the user to repeat them.
+
+Conversation remains open-ended, but consumer capability is an explicit typed allowlist. `SupportedConsumerCapabilitySchema` currently permits only `level_2_ev_charger`. The session instruction limits guidance and any proposed implementation to a new Level 2 EV charger assessment; unsupported requests, including a Tesla Powerwall 3 installation, must receive the fixed not-equipped-yet response and redirect only to the supported capability. A new consumer capability requires a schema value, reviewed typed tools/events, deterministic or validated implementation, and an instruction/test update before it is exposed.
+
+The only client-native Realtime tool is `request_evidence_photo`. Its strict input is one of `electrical_panel`, `charger_location`, `route_obstacle`, or `equipment_nameplate` plus a concise reason. iOS validates the call, presents camera/upload capture, records typed visual evidence, sends a function-call result, and then requests the next Realtime response. The model must not claim a photo was captured until that result arrives.
+
+This boundary is the future agent-tool read/write surface: agent tools must fetch the validated assessment and may submit only the same event union. Agent code cannot dereference a device-local or `local-mac://` artifact URI; a future authorized artifact-read adapter must resolve an opaque server-issued artifact reference before such bytes become tool-readable.
 
 ## Versioning
 - `sitegraphVersion: 0.1.0`

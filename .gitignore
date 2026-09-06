@@ -32,3 +32,6 @@ xcuserdata/
 
 # Local worktrees
 .worktrees/
+
+# Local RoomPlan USDZ backups received by the development Mac
+data/spatial-artifacts/

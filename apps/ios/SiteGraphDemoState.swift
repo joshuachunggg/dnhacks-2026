@@ -301,55 +301,140 @@ struct DemoInstallerHandoff: Codable {
 
 @MainActor
 final class SiteGraphDemoViewModel: ObservableObject {
+    private static let demoServerBaseURL = "http://192.168.1.121:3000"
+    let realtime = RealtimeSessionClient()
     @Published private(set) var snapshot: SiteGraphDemoSnapshot?
     @Published private(set) var loadError: String?
     @Published var serverBaseURL: String
+    @Published var propertyAddress: String
     @Published var vehicleIntent: String
     @Published var chargingIntent: String
+    @Published var realtimeDemoToken: String
     @Published private(set) var engineeringStatus = "Fixture fallback active. Connect a server to run the deterministic assessment."
     @Published private(set) var engineeringStatusIsError = false
     @Published private(set) var isRunningEngineeringScenario = false
     @Published private(set) var isUsingFixtureFallback = true
     @Published private(set) var spatialCaptureStatus = "Capture a room to add spatial metadata to the live assessment."
+    @Published private(set) var visionStatus = "Capture a panel frame after scanning the room to create reviewable visual evidence."
 
     private let fixtureName = "modern-200a"
     private var fixtureData: Data?
     private var liveAssessmentId: String?
+    private var latestSpatialCapture: SpatialCapturePayload?
+
+    var roomModelURL: URL? {
+        latestSpatialCapture?.artifacts.first(where: { $0.kind == .roomUSDZ })?.localFileURL
+    }
+
+    var spatialCapturePayload: SpatialCapturePayload? {
+        latestSpatialCapture
+    }
+
+    var detectedRoomObjectTypes: [RoomPlanObjectType] {
+        latestSpatialCapture?.detectedObjectTypes ?? []
+    }
     private let defaults: UserDefaults
     private enum PreferenceKey {
         static let serverBaseURL = "engineering.serverBaseURL"
-        static let vehicleIntent = "engineering.vehicleIntent"
-        static let chargingIntent = "engineering.chargingIntent"
+        static let realtimeDemoToken = "realtime.demoToken"
+        static let latestSpatialCapture = "spatialCapture.latest.v1"
     }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        serverBaseURL = defaults.string(forKey: PreferenceKey.serverBaseURL) ?? ProcessInfo.processInfo.environment["DEMO_SERVER_BASE_URL"] ?? ""
-        vehicleIntent = defaults.string(forKey: PreferenceKey.vehicleIntent) ?? ""
-        chargingIntent = defaults.string(forKey: PreferenceKey.chargingIntent) ?? "Hardwired home charging"
-        loadSeededAssessment()
+        serverBaseURL = defaults.string(forKey: PreferenceKey.serverBaseURL) ?? Self.demoServerBaseURL
+        propertyAddress = ""
+        vehicleIntent = ""
+        chargingIntent = ""
+        realtimeDemoToken = defaults.string(forKey: PreferenceKey.realtimeDemoToken) ?? ""
+        latestSpatialCapture = Self.loadSavedSpatialCapture(from: defaults)
+        clearAssessment()
     }
 
-    var actionTitle: String { "Reset seeded assessment" }
+    var actionTitle: String { snapshot == nil ? "Load demo fixture" : "Clear assessment" }
+
+    var hasSpatialCapture: Bool { latestSpatialCapture != nil }
 
     var actionSubtitle: String {
-        "Restore modern-200A fixture and clear the saved vehicle and charging intent in one action."
+        snapshot == nil
+            ? "Load the bundled modern-200A fixture only when you need the demo fallback."
+            : "Remove the current assessment data and return to the blank start state."
     }
 
     func saveEngineeringIntent() {
         defaults.set(serverBaseURL, forKey: PreferenceKey.serverBaseURL)
-        defaults.set(vehicleIntent, forKey: PreferenceKey.vehicleIntent)
-        defaults.set(chargingIntent, forKey: PreferenceKey.chargingIntent)
+        defaults.set(realtimeDemoToken, forKey: PreferenceKey.realtimeDemoToken)
     }
 
-    func resetToSeededAssessment() {
-        defaults.removeObject(forKey: PreferenceKey.vehicleIntent)
-        defaults.removeObject(forKey: PreferenceKey.chargingIntent)
-        vehicleIntent = ""
-        chargingIntent = "Hardwired home charging"
+    func connectRealtime() async {
+        guard let fixtureData, let baseURL = normalizedServerURL else {
+            realtime.connectionFailed("Start an assessment and configure a reachable server before connecting the guide.")
+            return
+        }
+        do {
+            let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
+            saveEngineeringIntent()
+            let address = propertyAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+            await realtime.connect(
+                serverBaseURL: baseURL,
+                demoToken: realtimeDemoToken,
+                assessmentId: assessmentId,
+                assessmentContext: RealtimeAssessmentContext(
+                    propertyAddress: address.isEmpty ? snapshot?.site.address ?? "Not provided" : address,
+                    vehicleIntent: vehicleIntent,
+                    chargingIntent: chargingIntent
+                )
+            )
+        } catch {
+            realtime.connectionFailed("Could not prepare the live assessment: \(error.localizedDescription)")
+        }
+    }
+
+    func toggleDemoFixture() {
+        if snapshot == nil {
+            loadSeededAssessment()
+            return
+        }
+        clearAssessment()
+    }
+
+    func startAssessmentFromAddress() {
+        let address = propertyAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !address.isEmpty else {
+            loadError = "Enter the property address before starting an assessment."
+            return
+        }
+        do {
+            let data = try Self.blankAssessmentData(address: address)
+            snapshot = try JSONDecoder().decode(SiteGraphDemoSnapshot.self, from: data)
+            fixtureData = data
+            loadError = nil
+            liveAssessmentId = nil
+            latestSpatialCapture = nil
+            isUsingFixtureFallback = false
+            engineeringStatus = "Property address recorded as user-supplied. Capture the room and panel before requesting an assessment."
+            engineeringStatusIsError = false
+            saveEngineeringIntent()
+        } catch {
+            loadError = "Could not start a blank assessment: \(error.localizedDescription)"
+        }
+    }
+
+    private func clearAssessment() {
+        snapshot = nil
+        fixtureData = nil
+        loadError = nil
         liveAssessmentId = nil
-        spatialCaptureStatus = "Capture a room to add spatial metadata to the live assessment."
-        loadSeededAssessment()
+        propertyAddress = ""
+        vehicleIntent = ""
+        chargingIntent = ""
+        spatialCaptureStatus = latestSpatialCapture == nil
+            ? "Capture a room to add spatial metadata to the live assessment."
+            : "Saved RoomPlan model restored on this device."
+        visionStatus = "Capture a panel frame after scanning the room to create reviewable visual evidence."
+        isUsingFixtureFallback = false
+        engineeringStatus = "Start by entering the property address. Load demo fixture remains available as an explicit fallback."
+        engineeringStatusIsError = false
     }
 
     func loadSeededAssessment() {
@@ -357,6 +442,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
             let data = try Self.loadFixtureData(named: fixtureName)
             snapshot = try JSONDecoder().decode(SiteGraphDemoSnapshot.self, from: data)
             fixtureData = data
+            propertyAddress = snapshot?.site.address ?? ""
             loadError = nil
             isUsingFixtureFallback = true
             liveAssessmentId = nil
@@ -410,8 +496,9 @@ final class SiteGraphDemoViewModel: ObservableObject {
     }
 
     func recordSpatialCapture(_ payload: SpatialCapturePayload) async {
+        saveSpatialCapture(payload)
         guard let fixtureData else {
-            spatialCaptureStatus = "The seeded assessment must load before spatial metadata can be recorded."
+            spatialCaptureStatus = "Room model saved on this device. Start an assessment to record its metadata."
             return
         }
         guard let baseURL = normalizedServerURL else {
@@ -421,11 +508,156 @@ final class SiteGraphDemoViewModel: ObservableObject {
 
         do {
             let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
+            let serverPayload = try await uploadRoomModel(in: payload, baseURL: baseURL, assessmentId: assessmentId)
             let event = SpatialCaptureEvent(
                 eventId: "event-\(UUID().uuidString.lowercased())",
                 eventName: .captureRecorded,
                 timestamp: payload.timestamp,
                 producer: "ios-roomplan",
+                payload: serverPayload
+            )
+            let response: LiveAssessmentResponse = try await send(
+                SpatialCaptureRequestBuilder.eventRequest(
+                    baseURL: baseURL,
+                    assessmentId: assessmentId,
+                    event: event
+                )
+            )
+            snapshot = response.assessment
+            isUsingFixtureFallback = false
+            spatialCaptureStatus = "Spatial metadata recorded and the USDZ is backed up to the local Mac. The phone keeps its copy for room inspection."
+        } catch {
+            spatialCaptureStatus = "Room model saved locally; Mac backup or metadata recording failed: \(error.localizedDescription). Confirm the phone and Mac share Wi-Fi, then use the Mac LAN URL—not localhost—in the Panel server field."
+        }
+    }
+
+    private func uploadRoomModel(
+        in payload: SpatialCapturePayload,
+        baseURL: URL,
+        assessmentId: String
+    ) async throws -> SpatialCapturePayload {
+        guard let localArtifact = payload.artifacts.first(where: { $0.kind == .roomUSDZ }),
+              let localURL = localArtifact.localFileURL else {
+            throw NSError(domain: "SiteGraphDemo", code: 4, userInfo: [NSLocalizedDescriptionKey: "The local RoomPlan USDZ is unavailable for backup."])
+        }
+        let request = try SpatialCaptureRequestBuilder.artifactUploadRequest(
+            baseURL: baseURL,
+            assessmentId: assessmentId,
+            artifact: localArtifact
+        )
+        let (data, response) = try await URLSession.shared.upload(for: request, from: Data(contentsOf: localURL))
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            throw NSError(domain: "SiteGraphDemo", code: (response as? HTTPURLResponse)?.statusCode ?? 0, userInfo: [NSLocalizedDescriptionKey: String(data: data, encoding: .utf8) ?? "The local Mac could not save the RoomPlan USDZ."])
+        }
+        let uploaded = try JSONDecoder().decode(LocalArtifactUploadResponse.self, from: data).artifact
+        guard uploaded.id == localArtifact.id, uploaded.byteLength == localArtifact.byteLength, uploaded.sha256.caseInsensitiveCompare(localArtifact.sha256) == .orderedSame else {
+            throw NSError(domain: "SiteGraphDemo", code: 5, userInfo: [NSLocalizedDescriptionKey: "The local Mac returned a RoomPlan artifact that does not match the phone copy."])
+        }
+        return SpatialCapturePayload(
+            id: payload.id,
+            kind: payload.kind,
+            status: payload.status,
+            coordinateSpaceId: payload.coordinateSpaceId,
+            timestamp: payload.timestamp,
+            producer: payload.producer,
+            detectedObjectTypes: payload.detectedObjectTypes,
+            artifacts: payload.artifacts.map { $0.id == uploaded.id ? uploaded : $0 },
+            evidence: payload.evidence.map { evidence in
+                evidence.uri == localArtifact.uri
+                    ? SpatialEvidence(id: evidence.id, type: evidence.type, label: evidence.label, uri: uploaded.uri)
+                    : evidence
+            }
+        )
+    }
+
+    func forgetSavedSpatialCapture() {
+        defaults.removeObject(forKey: PreferenceKey.latestSpatialCapture)
+        latestSpatialCapture = nil
+        spatialCaptureStatus = "Saved RoomPlan model removed from this device."
+    }
+
+    func restoreSavedSpatialCaptureFromMac() async {
+        guard let capture = latestSpatialCapture,
+              let artifact = capture.artifacts.first(where: { $0.kind == .roomUSDZ }),
+              let remoteURI = capture.evidence.first(where: { $0.type == .roomModel })?.uri,
+              let baseURL = normalizedServerURL else {
+            spatialCaptureStatus = "Enter the Mac's reachable LAN server URL before restoring the saved room scan."
+            return
+        }
+        spatialCaptureStatus = "Restoring the verified RoomPlan USDZ from the local Mac…"
+        do {
+            let request = try SpatialCaptureRequestBuilder.artifactRestoreRequest(baseURL: baseURL, remoteURI: remoteURI)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode),
+                  data.count == artifact.byteLength,
+                  httpResponse.value(forHTTPHeaderField: "x-content-sha256")?.caseInsensitiveCompare(artifact.sha256) == .orderedSame else {
+                throw NSError(domain: "SiteGraphDemo", code: 6, userInfo: [NSLocalizedDescriptionKey: "The local Mac backup is missing or does not match the saved RoomPlan descriptor."])
+            }
+            let directory = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                .appendingPathComponent("SpatialCaptures", isDirectory: true)
+            let restored = try LocalSpatialArtifactStore(directoryURL: directory).persist(data: data, id: artifact.id, kind: .roomUSDZ, contentType: artifact.contentType)
+            guard restored.sha256.caseInsensitiveCompare(artifact.sha256) == .orderedSame else {
+                throw NSError(domain: "SiteGraphDemo", code: 7, userInfo: [NSLocalizedDescriptionKey: "The restored RoomPlan USDZ failed local integrity verification."])
+            }
+            let restoredPayload = SpatialCapturePayload(id: capture.id, kind: capture.kind, status: capture.status, coordinateSpaceId: capture.coordinateSpaceId, timestamp: capture.timestamp, producer: capture.producer, detectedObjectTypes: capture.detectedObjectTypes, artifacts: capture.artifacts.map { $0.id == artifact.id ? restored : $0 }, evidence: capture.evidence)
+            saveSpatialCapture(restoredPayload)
+            spatialCaptureStatus = "RoomPlan USDZ restored from the local Mac and verified against its saved SHA-256."
+        } catch {
+            spatialCaptureStatus = "Could not restore the RoomPlan backup: \(error.localizedDescription)"
+        }
+    }
+
+    func recordPanelFrame(imageData: Data, rectangleCount: Int) async {
+        guard let capture = latestSpatialCapture else {
+            visionStatus = "Scan and save a RoomPlan space before recording a panel frame, so the evidence can reference its coordinate space."
+            return
+        }
+        guard let fixtureData else {
+            visionStatus = "The seeded assessment must load before visual evidence can be recorded."
+            return
+        }
+        guard let baseURL = normalizedServerURL else {
+            visionStatus = "Panel image saved only after a reachable server URL is configured."
+            return
+        }
+
+        do {
+            let artifactId = "artifact-panel-\(UUID().uuidString.lowercased())"
+            let directory = try FileManager.default.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            ).appendingPathComponent("SpatialCaptures", isDirectory: true)
+            let artifact = try LocalSpatialArtifactStore(directoryURL: directory).persist(
+                data: imageData,
+                id: artifactId,
+                kind: .panelImage,
+                contentType: "image/jpeg"
+            )
+            let timestamp = ISO8601DateFormatter().string(from: Date())
+            let frameId = "frame-panel-\(UUID().uuidString.lowercased())"
+            let evidence = SpatialEvidence(
+                id: "evidence-\(frameId)",
+                type: .imageFrame,
+                label: "Panel evidence frame \(frameId)",
+                uri: artifact.uri
+            )
+            let payload = VisualFramePayload(
+                id: frameId,
+                captureId: capture.id,
+                coordinateSpaceId: capture.coordinateSpaceId,
+                timestamp: timestamp,
+                producer: "ios-vision",
+                artifact: artifact,
+                evidence: evidence
+            )
+            let assessmentId = try await ensureLiveAssessment(baseURL: baseURL, fixtureData: fixtureData)
+            let event = VisualFrameRecordedEvent(
+                eventId: "event-\(UUID().uuidString.lowercased())",
+                timestamp: timestamp,
+                producer: "ios-vision",
                 payload: payload
             )
             let response: LiveAssessmentResponse = try await send(
@@ -437,9 +669,10 @@ final class SiteGraphDemoViewModel: ObservableObject {
             )
             snapshot = response.assessment
             isUsingFixtureFallback = false
-            spatialCaptureStatus = "Spatial metadata recorded on the server. The USDZ remains local to this device."
+            visionStatus = "Panel frame recorded with \(rectangleCount) local Vision rectangle candidate\(rectangleCount == 1 ? "" : "s"). It remains proposed evidence until review."
+            realtime.sendPanelImage(imageData)
         } catch {
-            spatialCaptureStatus = "Room model saved locally; server metadata recording failed: \(error.localizedDescription). Confirm the phone and Mac share Wi-Fi, then use the Mac LAN URL—not localhost—in the Panel server field."
+            visionStatus = "Panel-frame recording failed: \(error.localizedDescription). The fixture fallback remains available."
         }
     }
 
@@ -472,6 +705,20 @@ final class SiteGraphDemoViewModel: ObservableObject {
             engineeringStatus = "Server tool run failed and the fixture fallback could not be restored: \(error.localizedDescription)"
             engineeringStatusIsError = true
         }
+    }
+
+    private func saveSpatialCapture(_ payload: SpatialCapturePayload) {
+        latestSpatialCapture = payload
+        do {
+            defaults.set(try JSONEncoder().encode(payload), forKey: PreferenceKey.latestSpatialCapture)
+        } catch {
+            spatialCaptureStatus = "Room model is available for this session, but its saved scan record could not be stored: \(error.localizedDescription)"
+        }
+    }
+
+    private static func loadSavedSpatialCapture(from defaults: UserDefaults) -> SpatialCapturePayload? {
+        guard let data = defaults.data(forKey: PreferenceKey.latestSpatialCapture) else { return nil }
+        return try? JSONDecoder().decode(SpatialCapturePayload.self, from: data)
     }
 
     private var normalizedServerURL: URL? {
@@ -507,10 +754,71 @@ final class SiteGraphDemoViewModel: ObservableObject {
         }
         return try Data(contentsOf: url)
     }
+
+    private static func blankAssessmentData(address: String) throws -> Data {
+        let template = try loadFixtureData(named: "modern-200a")
+        guard var assessment = try JSONSerialization.jsonObject(with: template) as? [String: Any] else {
+            throw NSError(domain: "SiteGraphDemo", code: 3, userInfo: [NSLocalizedDescriptionKey: "The assessment template is not a JSON object."])
+        }
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        assessment["assessmentId"] = "assessment-\(UUID().uuidString.lowercased())"
+        assessment["evidence"] = []
+        assessment["spatialCaptures"] = []
+        assessment["visualFrames"] = []
+        assessment["spatialObjects"] = []
+        assessment["site"] = [
+            "id": "site-\(UUID().uuidString.lowercased())",
+            "label": "Property assessment",
+            "address": address,
+            "jurisdiction": ["city": "Unknown", "county": "Unknown", "state": "Unknown", "ahj": "Unknown"],
+        ]
+        assessment["proposedEvseLocation"] = [
+            "id": "evse-\(UUID().uuidString.lowercased())",
+            "label": "Proposed charger location not yet collected",
+            "wall": "unknown",
+            "status": "proposed",
+            "sourceType": "assumed",
+            "evidenceIds": [],
+            "timestamp": timestamp,
+            "producer": "ios-assessment-start",
+            "assumptions": ["Collect the charger position after the room scan."],
+            "notes": [],
+        ]
+        assessment["electricalPanel"] = [
+            "id": "panel-\(UUID().uuidString.lowercased())",
+            "label": "Panel not yet observed",
+            "status": "proposed",
+            "sourceType": "assumed",
+            "evidenceIds": [],
+            "timestamp": timestamp,
+            "producer": "ios-assessment-start",
+            "visibleConditionNotes": ["Capture or select a panel image to collect visible evidence."],
+            "assumptions": [],
+            "notes": [],
+        ]
+        assessment["measurements"] = []
+        assessment["observations"] = []
+        assessment["engineeringScenarios"] = []
+        assessment["toolRuns"] = []
+        assessment["costScenarios"] = []
+        assessment["finalAssessment"] = [
+            "status": "insufficient_data",
+            "summary": "Collect panel and route evidence before assessing EV charger feasibility.",
+            "unresolvedRequirements": ["Panel evidence", "Room scan and route measurement", "Proposed charger location"],
+            "professionalVerificationItems": [],
+            "installerHandoff": ["title": "Assessment not ready", "bullets": []],
+            "timestamp": timestamp,
+        ]
+        return try JSONSerialization.data(withJSONObject: assessment)
+    }
 }
 
 private struct LiveAssessmentResponse: Decodable {
     let assessment: SiteGraphDemoSnapshot
+}
+
+private struct LocalArtifactUploadResponse: Decodable {
+    let artifact: SpatialArtifact
 }
 
 private func humanized(_ rawValue: String) -> String {

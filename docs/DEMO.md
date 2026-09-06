@@ -2,9 +2,9 @@
 
 ## Purpose and claim boundary
 
-Show a structured **preliminary** EV-charger assessment: evidence and user input are kept separate, deterministic fixture outputs are visible, and the handoff states what an electrician or AHJ must still verify.
+Show a structured **preliminary** EV-charger assessment: evidence and user input are kept separate, deterministic fixture outputs are visible, and the handoff states what an electrician or AHJ must still verify. The agent may converse naturally, but the demo supports only a new Level 2 EV charger assessment; it must decline unsupported consumer systems such as a Tesla Powerwall 3.
 
-Do not describe this as a live end-to-end field assessment. The native shell creates the bundled modern fixture assessment, runs deterministic engineering and cost tools through the validated API, and renders returned provenance, requirements, handoff, and cost status. The local HTTP sequence and simulator build are verified; this updated flow is not yet accepted on a physical device. Live capture, Realtime orchestration, durable persistence, and handoff export still require integration. This rehearsal uses seeded SiteGraph v0 artifacts and fixture-scoped assumptions; do not claim they are current field observations or quotes.
+Do not describe this as a live end-to-end field assessment. The native shell creates the bundled modern fixture assessment, runs deterministic engineering and cost tools through the validated API, and renders returned provenance, requirements, handoff, and cost status. The local HTTP sequence and simulator build are verified; this updated flow is not yet accepted on a physical device. RoomPlan capture, panel-photo selection, and direct Realtime PCM voice are implemented but still require physical-device acceptance; durable persistence and handoff export remain future work. This rehearsal uses seeded SiteGraph v0 artifacts and fixture-scoped assumptions; do not claim they are current field observations or quotes.
 
 Safety language to read if asked: “This assessment is preliminary and based on visible evidence, user input, and deterministic checks. Final electrical decisions require a licensed electrician or the authority having jurisdiction.” Do not direct a consumer to open a panel, remove a dead front, touch wiring, bypass permitting, or perform electrical work.
 
@@ -75,6 +75,7 @@ Live capture is not implemented in the current native shell. Do not stage a came
 | What still needs a professional? | True load calculation, breaker/conductor compatibility, service/panel confirmation, routing, and permit/inspection path as applicable. | `finalAssessment.professionalVerificationItems` and unresolved requirements. |
 | What changes for an older or constrained home? | The constrained fixture keeps the lower-current path conditional and rejects a 40 A option as-is; it does not certify capacity. | Constrained fixture scenarios and warnings. |
 | What happens when data is missing? | The system returns `insufficient_data`, names what is missing, and does not invent a recommendation or cost. | Insufficient-data fixture. |
+| Can it help with a Tesla Powerwall 3? | No. The current typed consumer capability is only a new Level 2 EV charger assessment. The agent says it is not equipped to help with that yet and redirects to the supported charger assessment. | Realtime session capability policy. |
 | What is hidden? | Live capture, Realtime, persistence, multi-fixture selection, updated physical-device acceptance, and handoff export are not complete. | This document’s availability table and the app’s fixture labels. |
 
 ## Rehearsal exit criteria

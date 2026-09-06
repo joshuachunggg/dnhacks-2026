@@ -3,36 +3,33 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
+    @State private var selectedStep = 0
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedStep) {
             NavigationStack {
-                SiteScreen(viewModel: viewModel)
+                SiteScreen(viewModel: viewModel, onNext: { selectedStep = 1 })
             }
             .tabItem {
-                Label("Site", systemImage: "house")
+                Label("1 Start", systemImage: "house")
             }
+            .tag(0)
 
             NavigationStack {
-                PanelScreen(viewModel: viewModel)
+                CaptureScreen(viewModel: viewModel, onNext: { selectedStep = 2 })
             }
             .tabItem {
-                Label("Panel", systemImage: "bolt.fill")
+                Label("2 Capture", systemImage: "view.3d")
             }
-
-            NavigationStack {
-                ChargerLocationScreen(viewModel: viewModel)
-            }
-            .tabItem {
-                Label("Charger Location", systemImage: "location.fill")
-            }
+            .tag(1)
 
             NavigationStack {
                 ResultsScreen(viewModel: viewModel)
             }
             .tabItem {
-                Label("Results", systemImage: "checkmark.seal.fill")
+                Label("3 Results", systemImage: "checkmark.seal.fill")
             }
+            .tag(2)
         }
         .tint(.indigo)
     }
@@ -40,11 +37,23 @@ struct ContentView: View {
 
 private struct SiteScreen: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
+    let onNext: () -> Void
 
     var body: some View {
         AssessmentScrollContainer {
             VStack(spacing: 16) {
+                AssessmentStepCard(
+                    step: 1,
+                    title: "Start the assessment",
+                    instruction: "Enter the property address or load the explicit demo fixture. Then scan the relevant room or garage.",
+                    nextTitle: "Next: scan space",
+                    onNext: onNext
+                )
                 DemoActionCard(viewModel: viewModel)
+
+                if viewModel.snapshot == nil {
+                    PropertyAddressCard(viewModel: viewModel)
+                }
 
                 if let snapshot = viewModel.snapshot {
                     DemoCard(title: "Site", subtitle: viewModel.isUsingFixtureFallback ? snapshot.sourceSummary : "Server-returned assessment after deterministic tool runs", systemImage: "house.fill") {
@@ -68,76 +77,35 @@ private struct SiteScreen: View {
                     }
                 } else {
                     DemoEmptyState(
-                        title: viewModel.loadError == nil ? "Seeded demo is cleared" : "Fixture load failed",
-                        message: viewModel.loadError ?? "Tap Use demo data to reload the bundled modern-200A fixture and restore the four-screen assessment story."
+                        title: viewModel.loadError == nil ? "Start a property assessment" : "Assessment start failed",
+                        message: viewModel.loadError ?? "Enter the property address to start with a blank assessment, or load the demo fixture explicitly."
                     )
                 }
             }
         }
-        .navigationTitle("Site")
+        .navigationTitle("1. Start")
     }
 }
 
-private struct PanelScreen: View {
+private struct CaptureScreen: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
+    let onNext: () -> Void
 
     var body: some View {
         AssessmentScrollContainer {
             VStack(spacing: 16) {
-                DemoActionCard(viewModel: viewModel)
-                EngineeringIntentCard(viewModel: viewModel)
-
-                if let snapshot = viewModel.snapshot {
-                    DemoCard(title: "Panel", subtitle: "Visible facts and confidence", systemImage: "bolt.circle.fill") {
-                        VStack(spacing: 12) {
-                            FactRow(title: "Panel label", value: snapshot.electricalPanel.label, provenance: "panel summary", evidence: snapshot.electricalPanel.id)
-                            FactRow(title: "Manufacturer", value: snapshot.electricalPanel.manufacturer ?? "Unknown", provenance: snapshot.electricalPanel.sourceType.displayName, evidence: evidenceList(snapshot.electricalPanel.evidenceIds))
-                            FactRow(title: "Model family", value: snapshot.electricalPanel.modelFamily ?? "Unknown", provenance: snapshot.electricalPanel.status.displayName, evidence: "visible label text")
-                            FactRow(title: "Service", value: serviceSummary(snapshot.electricalPanel), provenance: "visually observed", evidence: evidenceList(snapshot.electricalPanel.evidenceIds))
-                            FactRow(title: "Breaker spaces", value: spacesSummary(snapshot.electricalPanel), provenance: "visible panel layout", evidence: "spaces are only a layout clue")
-                        }
-                    }
-
-                    DemoCard(title: "Visible panel notes", subtitle: "What the camera can and cannot say", systemImage: "doc.text.magnifyingglass") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            ForEach(snapshot.electricalPanel.visibleConditionNotes, id: \.self) { note in
-                                Label(note, systemImage: "exclamationmark.circle.fill")
-                                    .font(.subheadline)
-                            }
-                        }
-                    }
-
-                    DemoCard(title: "Panel observations", subtitle: "Provenance from the seed fixture", systemImage: "camera.metering.center.weighted") {
-                        VStack(spacing: 10) {
-                            ForEach(snapshot.observations.filter { observation in
-                                observation.kind == "panel" || observation.field == "panel_label_confirmation"
-                            }) { observation in
-                                ObservationRow(observation: observation)
-                            }
-                        }
-                    }
-                } else {
-                    DemoEmptyState(
-                        title: viewModel.loadError == nil ? "No seeded panel data yet" : "Fixture load failed",
-                        message: viewModel.loadError ?? "Reload the demo to show the modern 200A panel facts, visible notes, and provenance tags."
-                    )
-                }
-            }
-        }
-        .navigationTitle("Panel")
-    }
-}
-
-private struct ChargerLocationScreen: View {
-    @ObservedObject var viewModel: SiteGraphDemoViewModel
-
-    var body: some View {
-        AssessmentScrollContainer {
-            VStack(spacing: 16) {
+                AssessmentStepCard(
+                    step: 2,
+                    title: "Scan and talk with the guide",
+                    instruction: "Capture the room, then use the live assistant to provide the facts and evidence it requests.",
+                    nextTitle: "Next: review results",
+                    onNext: onNext
+                )
                 DemoActionCard(viewModel: viewModel)
                 RoomPlanCaptureCard(viewModel: viewModel)
+                LiveAssistantEntryCard(viewModel: viewModel, onFinish: { onNext() })
 
-                if let snapshot = viewModel.snapshot {
+                if let snapshot = viewModel.snapshot, viewModel.realtime.isLevel2EVChargerAssessmentActive {
                     DemoCard(title: "Charger location", subtitle: "Proposed EVSE mount point", systemImage: "location.fill") {
                         VStack(spacing: 12) {
                             FactRow(title: "Proposed wall", value: snapshot.proposedEvseLocation.wall, provenance: snapshot.proposedEvseLocation.status.displayName, evidence: evidenceList(snapshot.proposedEvseLocation.evidenceIds))
@@ -160,15 +128,10 @@ private struct ChargerLocationScreen: View {
                             .font(.subheadline)
                             .foregroundStyle(.primary)
                     }
-                } else {
-                    DemoEmptyState(
-                        title: viewModel.loadError == nil ? "No charger location yet" : "Fixture load failed",
-                        message: viewModel.loadError ?? "Use the seeded demo to show the proposed EVSE wall, route estimate, and evidence-backed location state."
-                    )
                 }
             }
         }
-        .navigationTitle("Charger Location")
+        .navigationTitle("2. Capture")
     }
 }
 
@@ -178,6 +141,11 @@ private struct ResultsScreen: View {
     var body: some View {
         AssessmentScrollContainer {
             VStack(spacing: 16) {
+                AssessmentStepCard(
+                    step: 3,
+                    title: "Review the handoff",
+                    instruction: "Compare the deterministic options, inspect the cost status, and identify what the electrician still needs to verify."
+                )
                 DemoActionCard(viewModel: viewModel)
 
                 if let snapshot = viewModel.snapshot {
@@ -258,7 +226,7 @@ private struct ResultsScreen: View {
                 }
             }
         }
-        .navigationTitle("Results")
+        .navigationTitle("4. Results")
     }
 }
 
@@ -280,7 +248,8 @@ private struct AssessmentScrollContainer<Content: View>: View {
                 .frame(maxWidth: maximumContentWidth, alignment: .leading)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.horizontal, horizontalPadding)
-                .padding(.vertical, 12)
+                .padding(.top, 12)
+                .padding(.bottom, 96)
         }
         .scrollIndicators(.hidden)
         .background(Color(.systemGroupedBackground))
@@ -433,7 +402,7 @@ private struct DemoActionCard: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
     var body: some View {
-        Button(action: viewModel.resetToSeededAssessment) {
+        Button(action: viewModel.toggleDemoFixture) {
             HStack(alignment: .center, spacing: 12) {
                 Image(systemName: "arrow.counterclockwise")
                     .font(.title3.weight(.semibold))
@@ -460,6 +429,72 @@ private struct DemoActionCard: View {
     }
 }
 
+private struct AssessmentStepCard: View {
+    let step: Int
+    let title: String
+    let instruction: String
+    var nextTitle: String?
+    var onNext: (() -> Void)?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 10) {
+                Text("STEP \(step) OF 3")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.indigo)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .background(Capsule().fill(Color.indigo.opacity(0.12)))
+                Spacer()
+                if step < 3 {
+                    Text("Complete in order")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Text(title)
+                .font(.title3.weight(.semibold))
+            Text(instruction)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            if let nextTitle, let onNext {
+                Button(nextTitle, action: onNext)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.indigo.opacity(0.08)))
+    }
+}
+
+private struct PropertyAddressCard: View {
+    @ObservedObject var viewModel: SiteGraphDemoViewModel
+
+    var body: some View {
+        DemoCard(title: "Property address", subtitle: "User-supplied site location", systemImage: "house.and.flag") {
+            VStack(alignment: .leading, spacing: 12) {
+                TextField("Street address, city, state", text: $viewModel.propertyAddress)
+                    .textContentType(.fullStreetAddress)
+                    .textInputAutocapitalization(.words)
+                    .textFieldStyle(.roundedBorder)
+                    .onChange(of: viewModel.propertyAddress) { _, _ in viewModel.saveEngineeringIntent() }
+
+                Text("The address is recorded as user-supplied. Jurisdiction, utility, equipment position, route, and panel facts are not inferred from it.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button("Start blank assessment", action: viewModel.startAssessmentFromAddress)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(viewModel.propertyAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+    }
+}
+
 private struct EngineeringIntentCard: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
 
@@ -472,6 +507,7 @@ private struct EngineeringIntentCard: View {
                     .onChange(of: viewModel.vehicleIntent) { _, _ in viewModel.saveEngineeringIntent() }
 
                 Picker("Charging intent", selection: $viewModel.chargingIntent) {
+                    Text("Select charging intent").tag("")
                     Text("Hardwired home charging").tag("Hardwired home charging")
                     Text("Plug-in home charging").tag("Plug-in home charging")
                     Text("I need installer guidance").tag("I need installer guidance")

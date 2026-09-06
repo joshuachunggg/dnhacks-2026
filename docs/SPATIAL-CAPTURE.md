@@ -1,6 +1,6 @@
 # Spatial Capture and Artifact Storage
 
-**Status:** first vertical slice implemented on 2026-09-05. One-room RoomPlan capture exports a local USDZ, computes an integrity descriptor, posts a validated metadata manifest to the in-memory assessment API, and opens the local model in the system Quick Look 3D viewer. ARKit anchors, route capture, panel capture, and durable uploads remain unimplemented.
+**Status:** first vertical slice implemented on 2026-09-05. One-room RoomPlan capture exports a local USDZ, computes an integrity descriptor, copies the USDZ to the development Mac's local artifact directory, posts a validated metadata manifest to the in-memory assessment API, and opens the phone copy in an in-app SceneKit 3D viewer. ARKit anchors, route capture, panel capture, production artifact storage, and agent-readable retrieval remain unimplemented.
 
 ## Purpose
 
@@ -13,10 +13,9 @@ The first live slice is intentionally one **relevant room or garage area**, not 
 The native app is a guided workflow rather than four equal data tabs:
 
 1. **Assessment home** — shows run mode (`live capture`, `seeded demo`, or `fallback`), the current outcome or next required action, and progress through the assessment.
-2. **Capture space** — guides one RoomPlan scan, reports completion/failure, saves the spatial artifact, and opens an interactive Quick Look USDZ preview for rotation, zoom, and inspection.
-3. **Capture panel** — takes or selects one panel image, creates proposed visual/OCR observations, and requires the user to confirm or correct them.
-4. **Choose charger location** — places a proposed EVSE AR anchor, captures route evidence/measurement, and requires confirmation before those facts become usable input.
-5. **Review and results** — separates confirmed evidence, unresolved items, deterministic feasibility/cost scenarios, and electrician/AHJ verification requirements. Detailed IDs, raw tool runs, and provenance remain available behind a Details disclosure.
+2. **Capture space** — guides one RoomPlan scan, reports completion/failure, saves the spatial artifact, and opens an interactive SceneKit USDZ preview with centered rotation and pinch zoom for inspection.
+3. **Live assistant** — opens only after the short RoomPlan scan. Its main canvas is the scanned room model while the user tap-starts/tap-stops a Realtime audio turn. Charger-specific fields and photo requests appear only after the guide has recognized the supported Level 2 EV-charger intent. Captured images use the existing proposed-evidence boundary and are sent to Realtime only after local evidence recording succeeds.
+4. **Review and results** — after the user explicitly finishes the supported assessment, separates confirmed evidence, unresolved items, deterministic feasibility/cost scenarios, and electrician/AHJ verification requirements. Detailed IDs, raw tool runs, and provenance remain available behind a Details disclosure.
 
 The primary action always advances the user to the next safe step. Fixture mode follows the same information architecture and explicitly labels that its data is seeded.
 
@@ -42,12 +41,13 @@ Each artifact reference must include an ID, content type, integrity hash, byte l
 
 ## Persistence strategy
 
-1. **Implemented:** the iPhone writes the exported RoomPlan USDZ into its app-support directory, calculates SHA-256 and byte size, and retains the local artifact.
-2. **Implemented:** the server validates and persists a compact capture manifest in the assessment's process-lifetime state. The manifest includes capture/coordinate-space identifiers and immutable artifact descriptors; it does not contain artifact bytes.
-3. **Deferred:** after user approval, the phone uploads artifacts to an environment-configured durable object store through a server-issued upload contract.
-4. **Deferred:** the iPhone deletes local originals only after confirmed durable upload; until then it retains a visible local-only state.
+1. **Implemented:** the iPhone writes the exported RoomPlan USDZ into its app-support directory, calculates SHA-256 and byte size, retains the local artifact, and uploads it to the configured Mac server after the assessment exists.
+2. **Implemented:** the local Mac accepts only RoomPlan USDZ bytes for an existing assessment, recomputes SHA-256/byte size, atomically writes them under `data/spatial-artifacts/<assessmentId>/` (or `SPATIAL_ARTIFACTS_DIR`), and returns a `local-mac://` descriptor. The iPhone checks the returned descriptor before posting the capture manifest.
+3. **Implemented:** the server validates and persists a compact capture manifest in the assessment's process-lifetime state. The manifest includes capture/coordinate-space identifiers and immutable artifact descriptors; it does not contain artifact bytes.
+4. **Deferred:** after user approval, the phone uploads artifacts to an environment-configured durable object store through a server-issued upload contract.
+5. **Deferred:** the iPhone deletes local originals only after confirmed durable upload; until then it retains a visible local-only state.
 
-The existing process-lifetime `Map` store is not a valid home for spatial assets or durable canonical references. The current implementation deliberately stores only validated metadata in that map and uses `local://` device references for local-only assets. It must introduce an artifact-store adapter with a real configured provider before claiming durable model storage or agent-readable 3D bytes.
+The process-lifetime assessment `Map` is not a home for spatial assets or durable canonical references. The current implementation stores raw RoomPlan bytes in a Mac-local directory and only validated metadata in that map. `local-mac://` identifies a development-machine copy but is neither a public URL nor agent-readable storage; introduce authenticated retrieval and a configured durable provider before making that claim.
 
 ## Contract requirements
 
@@ -72,7 +72,7 @@ One owner updates SiteGraph schemas, validation fixtures, state-store operations
 
 - **Artifact/server lane:** durable object-store adapter, upload/commit boundary, manifest persistence, retrieval authorization, and test provider.
 - **RoomPlan/AR lane:** one-room RoomPlan capture, local JSON/USDZ export, EVSE anchor, route evidence, and local retry state. It owns new capture files, not the primary SwiftUI workflow file.
-- **Panel lane:** camera image capture and reviewable proposed panel observation; no authoritative mutation before confirmation.
+- **Panel/live-assistant lane:** regular camera preview, tap-to-talk Realtime controls, and reviewable proposed panel observation; no authoritative mutation before confirmation. It must not run concurrently with `RoomCaptureView`, which owns the short RoomPlan scan's camera/AR session.
 - **Guided UX lane:** assessment home, progress state, mode labels, review/confirmation surfaces, fixture-equivalent flow, and compact room preview. It is the only lane modifying the main SwiftUI navigation composition.
 - **Realtime lane:** server-owned one-question conversation against the frozen typed tools; it must use the same confirmation and fallback contract.
 - **QA/rehearsal lane:** contract-derived tests, failure-mode rehearsal, fixture selection, and physical-device test script.

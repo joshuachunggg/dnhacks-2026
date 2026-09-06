@@ -6,7 +6,6 @@ struct RoomPlanCaptureCard: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
     @State private var isPresentingCapture = false
     @State private var isPresentingModelPreview = false
-    @State private var capturePayload: SpatialCapturePayload?
     @State private var captureError: String?
 
     var body: some View {
@@ -18,6 +17,15 @@ struct RoomPlanCaptureCard: View {
                     Text("Saved \(capturePayload.artifacts.count) RoomPlan artifact for this device. \(viewModel.spatialCaptureStatus)")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                    if capturePayload.detectedObjectTypes.isEmpty {
+                        Text("RoomPlan did not classify any supported objects in this scan.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Detected object types: \(capturePayload.detectedObjectTypes.map { "\($0.count) \($0.category)" }.joined(separator: ", ")).")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 } else {
                     Text("Scan the relevant garage or room to retain a local RoomPlan USDZ model for the assessment.")
                         .font(.footnote)
@@ -45,6 +53,18 @@ struct RoomPlanCaptureCard: View {
                         RoomModelQuickLookPreview(modelURL: modelURL)
                             .ignoresSafeArea()
                     }
+                } else if capturePayload != nil {
+                    Button("Restore saved scan from Mac") {
+                        Task { await viewModel.restoreSavedSpatialCaptureFromMac() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+
+                if capturePayload != nil {
+                    Button("Forget saved scan", role: .destructive) {
+                        viewModel.forgetSavedSpatialCapture()
+                    }
+                    .buttonStyle(.bordered)
                 }
             }
         } label: {
@@ -55,7 +75,6 @@ struct RoomPlanCaptureCard: View {
                 isPresentingCapture = false
                 switch result {
                 case .success(let payload):
-                    capturePayload = payload
                     Task { await viewModel.recordSpatialCapture(payload) }
                 case .failure(let error):
                     captureError = error.localizedDescription
@@ -67,6 +86,10 @@ struct RoomPlanCaptureCard: View {
 
     private var roomModelURL: URL? {
         capturePayload?.artifacts.first(where: { $0.kind == .roomUSDZ })?.localFileURL
+    }
+
+    private var capturePayload: SpatialCapturePayload? {
+        viewModel.spatialCapturePayload
     }
 }
 
@@ -179,6 +202,7 @@ private final class RoomPlanCaptureViewController: UIViewController, RoomCapture
             coordinateSpaceId: coordinateSpaceId,
             timestamp: timestamp,
             producer: "ios-roomplan",
+            detectedObjectTypes: roomPlanObjectTypes(in: room),
             artifacts: [artifact],
             evidence: [SpatialEvidence(
                 id: evidenceId,
@@ -187,5 +211,15 @@ private final class RoomPlanCaptureViewController: UIViewController, RoomCapture
                 uri: artifact.uri
             )]
         )
+    }
+
+    private func roomPlanObjectTypes(in room: CapturedRoom) -> [RoomPlanObjectType] {
+        Dictionary(grouping: room.objects) { object in
+            String(describing: object.category)
+        }
+        .map { category, objects in
+            RoomPlanObjectType(category: category, count: objects.count)
+        }
+        .sorted { $0.category.localizedCaseInsensitiveCompare($1.category) == .orderedAscending }
     }
 }

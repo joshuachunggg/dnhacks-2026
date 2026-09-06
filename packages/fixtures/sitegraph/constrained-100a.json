@@ -2,6 +2,11 @@
   "schemaVersion": "0.1.0",
   "assessmentId": "assessment-constrained-100a",
   "spatialCaptures": [],
+  "visualFrames": [],
+  "spatialObjects": [],
+  "spatialLocations": [],
+  "routeWaypoints": [],
+  "panelFactConfirmations": [],
   "evidence": [
     { "id": "frame-101", "type": "image_frame", "label": "Detached garage wall capture" },
     { "id": "frame-110", "type": "image_frame", "label": "Legacy main panel capture" },

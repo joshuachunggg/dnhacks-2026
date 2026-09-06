@@ -42,6 +42,10 @@ test('POST /api/assessments/:id/events persists a RoomPlan manifest and confirme
       coordinateSpaceId: 'roomplan-session-001',
       timestamp: '2026-09-05T14:00:00.000Z',
       producer: 'ios-roomplan',
+      detectedObjectTypes: [
+        { category: 'storage', count: 2 },
+        { category: 'table', count: 1 },
+      ],
       artifacts: [
         {
           id: 'artifact-garage-usdz',
@@ -111,10 +115,91 @@ test('POST /api/assessments/:id/events persists a RoomPlan manifest and confirme
 
   const body = await locationResponse.json();
   assert.equal(body.assessment.spatialCaptures[0].id, 'capture-garage-001');
+  assert.deepEqual(body.assessment.spatialCaptures[0].detectedObjectTypes, [
+    { category: 'storage', count: 2 },
+    { category: 'table', count: 1 },
+  ]);
   assert.equal(body.assessment.spatialCaptures[0].artifacts[0].kind, 'room_usdz');
   assert.equal(body.assessment.evidence.at(-1).id, 'evidence-garage-roomplan');
   assert.equal(body.assessment.measurements.at(-1).id, 'measurement-garage-route-001');
   assert.equal(body.assessment.proposedEvseLocation.id, 'evse-location-garage-west');
+});
+
+test('POST /api/assessments/:id/events records a frame-backed proposed spatial object', async () => {
+  const createResponse = await createAssessment(new Request('http://localhost/api/assessments', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(fixture),
+  }));
+  assert.equal(createResponse.status, 201);
+
+  const frameResponse = await postEvent({
+    eventId: 'event-panel-frame-recorded',
+    eventName: 'visual.frame.recorded',
+    timestamp: '2026-09-05T14:03:00.000Z',
+    producer: 'ios-vision',
+    schemaVersion: SiteGraphVersion,
+    payload: {
+      id: 'frame-panel-001',
+      captureId: 'capture-garage-001',
+      coordinateSpaceId: 'roomplan-session-001',
+      timestamp: '2026-09-05T14:03:00.000Z',
+      producer: 'ios-vision',
+      artifact: {
+        id: 'artifact-panel-001',
+        kind: 'panel_image',
+        uri: 'file:///captures/panel-001.jpg',
+        contentType: 'image/jpeg',
+        byteLength: 2048,
+        sha256: 'b'.repeat(64),
+      },
+      evidence: {
+        id: 'evidence-panel-frame-001',
+        type: 'image_frame',
+        label: 'Electrical panel frame',
+        uri: 'file:///captures/panel-001.jpg',
+      },
+    },
+  });
+  assert.equal(frameResponse.status, 200);
+
+  const objectResponse = await postEvent({
+    eventId: 'event-panel-object-proposed',
+    eventName: 'spatial.object.proposed',
+    timestamp: '2026-09-05T14:03:10.000Z',
+    producer: 'ios-vision',
+    schemaVersion: SiteGraphVersion,
+    payload: {
+      id: 'object-panel-001',
+      kind: 'electrical_panel',
+      label: 'Possible electrical panel',
+      status: 'proposed',
+      sourceType: 'visually_observed',
+      confidence: 0.92,
+      coordinateSpaceId: 'roomplan-session-001',
+      geometry: {
+        positionMeters: { x: 1.2, y: 1.5, z: -2.4 },
+        surface: 'wall',
+      },
+      detections: [{
+        evidenceId: 'evidence-panel-frame-001',
+        model: 'ios-vision-rectangle-v1',
+        imageBoundingBox: { x: 0.2, y: 0.15, width: 0.4, height: 0.7 },
+        confidence: 0.92,
+      }],
+      evidenceIds: ['evidence-panel-frame-001'],
+      timestamp: '2026-09-05T14:03:10.000Z',
+      producer: 'ios-vision',
+      assumptions: ['Position was placed by the user on the RoomPlan coordinate space.'],
+      notes: [],
+    },
+  });
+  assert.equal(objectResponse.status, 200);
+
+  const body = await objectResponse.json();
+  assert.equal(body.assessment.visualFrames.at(-1).id, 'frame-panel-001');
+  assert.equal(body.assessment.spatialObjects.at(-1).id, 'object-panel-001');
+  assert.equal(body.assessment.evidence.at(-1).id, 'evidence-panel-frame-001');
 });
 
 test('POST /api/assessments/:id/events rejects a spatial capture without a valid artifact hash', async () => {
