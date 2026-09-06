@@ -37,6 +37,18 @@ struct ContentView: View {
     }
 }
 
+private struct LoadDemoDataButton: View {
+    @ObservedObject var viewModel: SiteGraphDemoViewModel
+
+    var body: some View {
+        Button("Load demo data", action: viewModel.loadSeededAssessment)
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.top, 8)
+    }
+}
+
 private struct SiteScreen: View {
     @ObservedObject var viewModel: SiteGraphDemoViewModel
     let onNext: () -> Void
@@ -70,6 +82,8 @@ private struct SiteScreen: View {
                         message: viewModel.loadError ?? "Enter the property address to begin."
                     )
                 }
+
+                LoadDemoDataButton(viewModel: viewModel)
             }
         }
         .navigationTitle("Start")
@@ -120,6 +134,8 @@ private struct CaptureScreen: View {
                    viewModel.realtime.isLevel2EVChargerAssessmentActive || viewModel.spatialVisuals.evsePose != nil || snapshot.measurements.contains(where: { $0.kind == "route_length" }) {
                     CaptureTechnicalDetails(snapshot: snapshot)
                 }
+
+                LoadDemoDataButton(viewModel: viewModel)
             }
         }
         .navigationTitle("Capture")
@@ -215,6 +231,8 @@ private struct ResultsScreen: View {
                         message: viewModel.loadError ?? "Complete the capture and assessment steps to see the outcome and installer handoff."
                     )
                 }
+
+                LoadDemoDataButton(viewModel: viewModel)
             }
         }
         .navigationTitle("Results")

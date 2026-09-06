@@ -452,6 +452,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
     }
 
     func loadSeededAssessment() {
+        realtime.disconnect()
         do {
             let data = try Self.loadFixtureData(named: fixtureName)
             snapshot = try JSONDecoder().decode(SiteGraphDemoSnapshot.self, from: data)
@@ -461,6 +462,7 @@ final class SiteGraphDemoViewModel: ObservableObject {
             isUsingFixtureFallback = true
             liveAssessmentId = nil
             spatialCaptureAssessmentId = nil
+            spatialVisuals = SpatialVisuals()
             engineeringStatus = "Fixture fallback active. The bundled seeded assessment is shown until a server tool run succeeds."
             engineeringStatusIsError = false
         } catch {
