@@ -47,6 +47,13 @@ struct RealtimeVoiceClientCheck {
         precondition(source.contains("Analyze this requested evidence photo now."), "Requested evidence photos must prompt an immediate visual response.")
         precondition(source.contains("Only the electrical-panel photo is supported in this EV assessment."), "The native EV flow must reject charger-location and route photos in favor of model taps.")
         precondition(source.contains(".defaultToSpeaker"), "Realtime playback must prefer the device loudspeaker for every guide response.")
+        let stateURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            .appendingPathComponent("apps/ios/SiteGraphDemoState.swift")
+        let stateSource = try String(contentsOf: stateURL, encoding: .utf8)
+
+        precondition(stateSource.contains("static let demoServerBaseURL = \"http://192.168.9.59:3000\""), "The iOS default server URL must match the active demo LAN host.")
+        precondition(stateSource.contains("legacyDemoServerBaseURL"), "A saved stale demo LAN URL must migrate to the active demo host.")
+        precondition(stateSource.contains("savedServerURL == Self.legacyDemoServerBaseURL"), "The stale demo LAN host must be replaced during initialization.")
         precondition(source.contains("overrideOutputAudioPort(.speaker)"), "Realtime playback must explicitly retain loudspeaker output when iOS changes audio routes.")
         precondition(!source.contains("mode: .voiceChat"), "Realtime playback must not use phone-call audio routing.")
         precondition(source.contains("\"type\": \"realtime\""), "Realtime session updates must declare the required session type.")

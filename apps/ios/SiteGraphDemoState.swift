@@ -308,7 +308,8 @@ struct SpatialVisuals {
 
 @MainActor
 final class SiteGraphDemoViewModel: ObservableObject {
-    private static let demoServerBaseURL = "http://192.168.1.121:3000"
+    private static let demoServerBaseURL = "http://192.168.9.59:3000"
+    private static let legacyDemoServerBaseURL = "http://192.168.1.121:3000"
     let realtime = RealtimeSessionClient()
     @Published private(set) var snapshot: SiteGraphDemoSnapshot?
     @Published private(set) var loadError: String?
@@ -358,7 +359,10 @@ final class SiteGraphDemoViewModel: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        serverBaseURL = defaults.string(forKey: PreferenceKey.serverBaseURL) ?? Self.demoServerBaseURL
+        let savedServerURL = defaults.string(forKey: PreferenceKey.serverBaseURL)
+        serverBaseURL = savedServerURL == Self.legacyDemoServerBaseURL
+            ? Self.demoServerBaseURL
+            : savedServerURL ?? Self.demoServerBaseURL
         propertyAddress = ""
         vehicleIntent = ""
         chargingIntent = ""
